@@ -29,4 +29,4 @@ setInterval(function () {
         .catch(function (error) {
             console.log(error);
         });
-}, 1000);
+}, 100);

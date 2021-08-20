@@ -14,6 +14,29 @@ const dbName = 'node-express-test';
 
 let db;
 
+const poll = [
+    {
+        name: 'Chelsea',
+        votes: 100,
+    },
+    {
+        name: 'Arsenal',
+        votes: 70,
+    },
+    {
+        name: 'Liverpool',
+        votes: 250,
+    },
+    {
+        name: 'Manchester City',
+        votes: 689,
+    },
+    {
+        name: 'Manchester United',
+        votes: 150,
+    },
+];
+
 MongoClient.connect(url, function (err, client) {
     assert.equal(null, err);
     console.log("Connected correctly to server");
@@ -28,6 +51,10 @@ MongoClient.connect(url, function (err, client) {
 // serve the homepage
 app.get('/', (req, res) => {
     res.sendFile(__dirname + '/index.html');
+});
+
+app.get('/poll', (req, res) => {
+    res.json(poll);
 });
 
 app.post('/clicked', (req, res) => {
