@@ -1,20 +1,27 @@
 console.log('Client-side code running');
 
-const button = document.getElementById('myButton');
-button.addEventListener('click', function (e) {
-    console.log('button was clicked');
+const insertButton = document.getElementById('insertButton');
+insertButton.addEventListener('click', function (e) {
+    console.log('insertButton was clicked');
 
-    fetch('/clicked', { method: 'POST' })
-        .then(function (response) {
-            if (response.ok) {
-                console.log('click was recorded');
-                return;
-            }
-            throw new Error('Request failed.');
-        })
-        .catch(function (error) {
-            console.log(error);
-        });
+    var tName = String(document.getElementById('tableSelect').value);
+    var aName = String(document.getElementById('accountName').value);
+    var aValue = parseFloat(document.getElementById('accountValue').value);
+    const response = {
+        tableName: tName,
+        accountName: aName,
+        accountValue: aValue
+    };
+
+    fetch('/clicked', {
+        method: 'POST',
+        body: JSON.stringify(response),
+        headers: { 'Content-Type' : 'application/json'}
+    }).then(res => res.json())
+      .then(json => console.log("response: " + json))
+      .catch(function (error) {
+          console.log(error);
+      });
 });
 
 setInterval(function () {
@@ -29,4 +36,4 @@ setInterval(function () {
         .catch(function (error) {
             console.log(error);
         });
-}, 100);
+}, 1000);

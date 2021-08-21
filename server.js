@@ -3,11 +3,14 @@ console.log('Server-side code running');
 const express = require('express');
 const MongoClient = require('mongodb').MongoClient;
 const assert = require('assert');
+const bodyParser = require('body-parser');
 
 const app = express();
 
 // serve files from the public directory
 app.use(express.static('public'));
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
 
 const url = 'mongodb://localhost:27017';
 const dbName = 'node-express-test';
@@ -57,15 +60,38 @@ app.get('/poll', (req, res) => {
     res.json(poll);
 });
 
-app.post('/clicked', (req, res) => {
-    const click = { clickTime: new Date() };
-    console.log(click);
-    console.log(db);
+app.post('/insert', (req, res) => {
+    console.log("Inserting!");
+    console.log(req.body);
+    var table = String(req.body.table);
+    var value = req.body.value;
+    const insertValue = {
+        insertTime: new Date(),
+        amount: value
+    };
 
-    const collection = db.collection('clicks');
-    collection.insertOne(click, function (err, result) {
+    const collection = db.collection(table);
+    collection.insertOne(insertValue, function (err, result) {
+        assert.equal(err, null);
+        console.log("inserted into db");
+        res.sendStatus(201);
+    })
+})
+
+app.post('/clicked', (req, res) => {
+    var tableName = req.body.tableName;
+    var aName = req.body.accountName;
+    var aValue = req.body.accountValue;
+    const insertValue = {
+        insertTime: new Date(),
+        accountName: aName,
+        accountvalue: aValue
+    };
+
+    const collection = db.collection(tableName);
+    collection.insertOne(insertValue, function (err, result) {
         assert.equal(err, null)
-        console.log("inserted one click")
+        console.log("inserted into db")
         res.sendStatus(201);
     })
 })

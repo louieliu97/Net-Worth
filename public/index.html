@@ -8,8 +8,24 @@
     <title>Realtime D3 Chart</title>
 </head>
 <body>
-    <script src="https://js.pusher.com/4.2/pusher.min.js"></script>
-    <script src="https://d3js.org/d3.v5.min.js"></script>
-    <script src="app.js"></script>
+    <div>
+        <script src="https://js.pusher.com/4.2/pusher.min.js"></script>
+        <script src="https://d3js.org/d3.v5.min.js"></script>
+        <script src="app.js"></script>
+    </div>
+    <label for="tableSelect">Choose a table</label>
+    <select name="tableSelect" id="tableSelect">
+        <option value="investments">investments</option>
+        <option value="investments">crypto</option>
+        <option value="investments">cash</option>
+        <option value="investments">debt</option>
+    </select><br />
+    <label for="accountName">Enter Account Name:</label>
+    <textarea name="accountName" id="accountName" rows="1" cols="25"></textarea><br />
+    <label for="accountValue">Enter Account Value:</label>
+    <textarea name="accountValue" id="accountValue" rows="1" cols="25"></textarea><br />
+    <button id="insertButton">Insert Into Database</button>
+    <button id="queryButton">Query From Database</button>
+    <script src="client.js"></script>
 </body>
 </html>
