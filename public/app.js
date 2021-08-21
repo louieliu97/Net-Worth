@@ -1,4 +1,90 @@
 ﻿// app.js
+console.log('Client-side code running');
+
+const insertButton = document.getElementById('insertButton');
+insertButton.addEventListener('click', function (e) {
+    console.log('insertButton was clicked');
+    var assetSelect = document.getElementById('assetSelect');
+    var assetName = document.getElementById('assetName');
+    var accountName = document.getElementById('accountName');
+    var accountValue = document.getElementById('accountValue');
+
+    var assetTypeVal = String(assetSelect.value);
+    var assetNameVal = String(assetName.value);
+    var accountNameVal = String(accountName.value);
+    var accountValueVal = parseFloat(accountValue.value);
+
+    accountName.value = "";
+    accountValue.value = "";
+
+    const response = {
+        assetType: assetTypeVal,
+        assetName: assetNameVal,
+        accountName: accountNameVal,
+        accountValue: accountValueVal
+    };
+
+
+    fetch('/insert', {
+        method: 'POST',
+        body: JSON.stringify(response),
+        headers: { 'Content-Type': 'application/json' }
+    }).then(res => res.json())
+        .then(json => console.log("response: " + json))
+        .catch(function (error) {
+            console.log(error);
+        });
+});
+
+const queryButton = document.getElementById('queryButton');
+queryButton.addEventListener('click', function (e) {
+    console.log('queryButton was clicked');
+
+    var tName = String(document.getElementById('tableSelect').value);
+    const response = {
+        tableName: tName,
+    };
+
+    const queryTextArea = document.getElementById('queryTextArea');
+    fetch('/query', {
+        method: 'POST',
+        body: JSON.stringify(response),
+        headers: { 'Content-Type': 'application/json' }
+    }).then(res => res.json())
+        .then(function (json) {
+            var queryTextAreaStr = "";
+            for (let i = 0; i < json.length; i++) {
+                const j = JSON.parse(json[i]);
+                queryTextAreaStr += "-------------------------------\r\n";
+                queryTextAreaStr += "insert Time: " + j["insertTime"] + "\r\n";
+                queryTextAreaStr += "account Value: " + j["accountvalue"] + "\r\n";
+                queryTextAreaStr += "account Name: " + j["accountName"] + "\r\n";
+                queryTextAreaStr += "\r\n-------------------------------\r\n";
+            }
+            queryTextArea.value = queryTextAreaStr;
+        })
+        .catch(function (error) {
+            console.log(error);
+        });
+});
+
+const addVoteButton = document.getElementById('addVoteButton');
+addVoteButton.addEventListener('click', function (e) {
+    var teamName = String(document.getElementById('pollSelect').value);
+    const response = {
+        name: teamName
+    };
+
+    console.log("Sending team name: " + teamName);
+    fetch('/addPoll', {
+        method: 'POST',
+        body: JSON.stringify(response),
+        headers: { 'Content-Type': 'application/json' }
+    }).then(res => fetchPollText())
+        .catch(function (err) {
+            console.error(err);
+        })
+});
 
 // set the dimensions and margins of the graph
 const margin = { top: 20, right: 20, bottom: 30, left: 40 };
@@ -38,24 +124,25 @@ const tip = d3
     .attr('class', 'tooltip');
 
 // Get the poll data from the `/poll` endpoint
-fetch('http://localhost:8080/poll')
-    .then(response => response.json())
-    .then(poll => {
-        // add the x Axis
-        svg
-            .append('g')
-            .attr('transform', 'translate(0,' + height + ')')
-            .attr('class', 'x-axis')
-            .call(d3.axisBottom(x));
+async function fetchPollText() {
+    fetch('http://localhost:8080/poll')
+        .then(response => response.json())
+        .then(poll => {
+            svg
+                .append('g')
+                .attr('transform', 'translate(0,' + height + ')')
+                .attr('class', 'x-axis')
+                .call(d3.axisBottom(x));
 
-        // add the y Axis
-        svg
-            .append('g')
-            .attr('class', 'y-axis')
-            .call(d3.axisLeft(y));
+            // add the y Axis
+            svg
+                .append('g')
+                .attr('class', 'y-axis')
+                .call(d3.axisLeft(y));
 
-        update(poll);
-    });
+            update(poll);
+        });
+}
 
 function update(poll) {
     // Scale the range of the data in the x axis
@@ -112,3 +199,5 @@ function update(poll) {
     // update the y-axis
     svg.select('.y-axis').call(d3.axisLeft(y));
 }
+
+fetchPollText();

@@ -17,29 +17,6 @@ const dbName = 'NetWorth-test';
 
 let db;
 
-const poll = [
-    {
-        name: 'Chelsea',
-        votes: 100,
-    },
-    {
-        name: 'Arsenal',
-        votes: 70,
-    },
-    {
-        name: 'Liverpool',
-        votes: 250,
-    },
-    {
-        name: 'Manchester City',
-        votes: 689,
-    },
-    {
-        name: 'Manchester United',
-        votes: 150,
-    },
-];
-
 MongoClient.connect(url, function (err, client) {
     assert.equal(null, err);
     console.log("Connected correctly to server");
@@ -56,8 +33,42 @@ app.get('/', (req, res) => {
     res.sendFile(__dirname + '/index.html');
 });
 
-app.get('/poll', (req, res) => {
+const constructPoll = async (db) => {
+    try {
+        const poll_test = db.collection("poll_test");
+        var arr = [];
+        const items = await poll_test.find().toArray();
+        for (let i = 0; i < items.length; i++) {
+            var item = {
+                name: items[i].name,
+                votes: parseInt(items[i].votes)
+            };
+            arr.push(item);
+        }
+        return arr;
+    }
+    catch (err) { console.error(err); }
+}
+
+app.get('/poll', async function (req, res) {
+    var poll = await constructPoll(db);
     res.json(poll);
+});
+
+app.post('/addPoll', async function (req, res) {
+    try {
+        var teamName = String(req.body.name);
+        const poll_test = db.collection("poll_test");
+        var update = {
+            $inc: {
+                votes: 1
+            }
+        }
+        const items = await poll_test.updateOne(
+            { name: teamName }, update);
+        res.sendStatus(201);
+    }
+    catch (err) { console.error(err); } // catch any mongo error here
 });
 
 const getAssetAccount = async (db, assetTypeVal, accountNameVal) => {
