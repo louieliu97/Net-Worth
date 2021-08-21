@@ -61,24 +61,7 @@ app.get('/poll', (req, res) => {
 });
 
 app.post('/insert', (req, res) => {
-    console.log("Inserting!");
-    console.log(req.body);
-    var table = String(req.body.table);
-    var value = req.body.value;
-    const insertValue = {
-        insertTime: new Date(),
-        amount: value
-    };
-
-    const collection = db.collection(table);
-    collection.insertOne(insertValue, function (err, result) {
-        assert.equal(err, null);
-        console.log("inserted into db");
-        res.sendStatus(201);
-    })
-})
-
-app.post('/clicked', (req, res) => {
+    console.log("Inserting into database");
     var tableName = req.body.tableName;
     var aName = req.body.accountName;
     var aValue = req.body.accountValue;
@@ -96,10 +79,20 @@ app.post('/clicked', (req, res) => {
     })
 })
 
-// get the click data from the database
-app.get('/clicks', (req, res) => {
-    db.collection('clicks').find().toArray((err, result) => {
-        if (err) return console.log(err);
-        res.send(result);
+app.post('/query', (req, res) => {
+    console.log("Querying from database");
+    var tableName = String(req.body.tableName);
+
+    const collection = db.collection(tableName);
+    var array = [];
+    var stream = collection.find().stream();
+    stream.on("data", function (item) {
+        var str = JSON.stringify(item);
+        array.push(str);
     });
-});
+    stream.on("end", function () {
+        console.log(JSON.stringify(array));
+        res.send(JSON.stringify(array));
+    });
+
+})
