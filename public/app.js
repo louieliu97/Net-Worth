@@ -87,17 +87,11 @@ addVoteButton.addEventListener('click', function (e) {
 });
 
 // set the dimensions and margins of the graph
-const margin = { top: 20, right: 20, bottom: 30, left: 40 };
-const width = 960 - margin.left - margin.right;
-const height = 500 - margin.top - margin.bottom;
+const margin = 200;
+const width = 1000 - margin;
+const height = 1000 - margin;
 
-// set the ranges for the graph
-const x = d3
-    .scaleBand()
-    .range([0, width])
-    .padding(0.1);
-
-const y = d3.scaleLinear().range([height, 0]);
+const radius = Math.min(width, height) / 2 - margin;
 
 // append the container for the graph to the page
 const container = d3
@@ -110,94 +104,89 @@ container.append('h1').text('Who will win the 2018/19 Premier League Season?');
 // append the svg object to the body of the page
 // append a 'group' element to 'svg'
 // moves the 'group' element to the top left margin
-const svg = container
+var svg = container
     .append('svg')
-    .attr('width', width + margin.left + margin.right)
-    .attr('height', height + margin.top + margin.bottom)
+    .attr("width", width)
+    .attr("height", height)
     .append('g')
-    .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
+    .attr("transform", `translate(${width / 2}, ${height / 2})`);
 
-// Create a skeleton structure for a tooltip and append it to the page
-const tip = d3
-    .select('body')
-    .append('div')
-    .attr('class', 'tooltip');
+var pie = d3.pie()
+    .sort(null)
+    .value(function (d) { return d[1]; })
+
+var arc = d3.arc()
+    .innerRadius(radius * 0.5)
+    .outerRadius(radius * 0.8)
+
+var outerArc = d3.arc()
+    .innerRadius(radius * 0.9)
+    .outerRadius(radius * 0.9)
+
+const color = d3.scaleOrdinal()
+    .domain(["Arsenal", "Chelsea", "Liverpool", "Manchester City", "Manchester United"])
+    .range(d3.schemeDark2);
 
 // Get the poll data from the `/poll` endpoint
 async function fetchPollText() {
     fetch('http://localhost:8080/poll')
         .then(response => response.json())
         .then(poll => {
-            svg
-                .append('g')
-                .attr('transform', 'translate(0,' + height + ')')
-                .attr('class', 'x-axis')
-                .call(d3.axisBottom(x));
-
-            // add the y Axis
-            svg
-                .append('g')
-                .attr('class', 'y-axis')
-                .call(d3.axisLeft(y));
-
-            update(poll);
+            console.log("Poll: " + JSON.stringify(poll));
+            const data_ready = pie(Object.entries(poll));
+            console.log(data_ready);
+            update(data_ready, arc, outerArc);
+            return data_ready;
         });
 }
 
-function update(poll) {
-    // Scale the range of the data in the x axis
-    x.domain(
-        poll.map(d => {
-            return d.name;
-        })
-    );
-
-    // Scale the range of the data in the y axis
-    y.domain([
-        0,
-        d3.max(poll, d => {
-            return d.votes + 200;
-        }),
-    ]);
-
-    // Select all bars on the graph, take them out, and exit the previous data set.
-    // Enter the new data and append the rectangles for each object in the poll array
+function update(data_ready, arc, outerArc) {
+    d3.selectAll("g > *").remove();
+    // Build the pie chart: Basically, each part of the pie is a path that we build using the arc function.
     svg
-        .selectAll('.bar')
-        .remove()
-        .exit()
-        .data(poll)
-        .enter()
-        .append('rect')
-        .attr('class', 'bar')
-        .attr('x', d => {
-            return x(d.name);
-        })
-        .attr('width', x.bandwidth())
-        .attr('y', d => {
-            return y(d.votes);
-        })
-        .attr('height', d => {
-            return height - y(d.votes);
-        })
-        .on('mousemove', d => {
-            tip
-                .style('position', 'absolute')
-                .style('left', `${d3.event.pageX + 10}px`)
-                .style('top', `${d3.event.pageY + 20}px`)
-                .style('display', 'inline-block')
-                .style('opacity', '0.9')
-                .html(
-                    `<div><strong>${d.name}</strong></div> <span>${d.votes} votes</span>`
-                );
-        })
-        .on('mouseout', () => tip.style('display', 'none'));
+        .selectAll('allSlices')
+        .data(data_ready)
+        .join('path')
+        .attr('d', arc)
+        .attr('fill', d => color(d.data[0]))
+        .attr("stroke", "white")
+        .style("stroke-width", "2px")
+        .style("opacity", 0.7)
 
-    // update the x-axis
-    svg.select('.x-axis').call(d3.axisBottom(x));
+    // Add the polylines between chart and labels:
+    svg
+        .selectAll('allPolylines')
+        .data(data_ready)
+        .join('polyline')
+        .attr("stroke", "black")
+        .style("fill", "none")
+        .attr("stroke-width", 1)
+        .attr('points', function (d) {
+            const posA = arc.centroid(d) // line insertion in the slice
+            const posB = outerArc.centroid(d) // line break: we use the other arc generator that has been built only for that
+            const posC = outerArc.centroid(d); // Label position = almost the same as posB
+            const midangle = d.startAngle + (d.endAngle - d.startAngle) / 2 // we need the angle to see if the X position will be at the extreme right or extreme left
+            posC[0] = radius * 0.95 * (midangle < Math.PI ? 1 : -1); // multiply by 1 or -1 to put it on the right or on the left
+            return [posA, posB, posC]
+        })
 
-    // update the y-axis
-    svg.select('.y-axis').call(d3.axisLeft(y));
+    // Add the polylines between chart and labels:
+    svg
+        .selectAll('allLabels')
+        .data(data_ready)
+        .join('text')
+        .text(d => d.data[0] + " " + d.data[1] + " votes")
+        .attr('transform', function (d) {
+            const pos = outerArc.centroid(d);
+            const midangle = d.startAngle + (d.endAngle - d.startAngle) / 2
+            pos[0] = radius * 0.99 * (midangle < Math.PI ? 1 : -1);
+            return `translate(${pos})`;
+        })
+        .style('text-anchor', function (d) {
+            const midangle = d.startAngle + (d.endAngle - d.startAngle) / 2
+            return (midangle < Math.PI ? 'start' : 'end')
+        })
+    console.log("Done");
 }
 
 fetchPollText();

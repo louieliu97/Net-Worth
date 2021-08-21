@@ -2,6 +2,7 @@ console.log('Server-side code running');
 
 const express = require('express');
 const MongoClient = require('mongodb').MongoClient;
+const mongodb = require('mongodb');
 const assert = require('assert');
 const bodyParser = require('body-parser');
 
@@ -36,14 +37,10 @@ app.get('/', (req, res) => {
 const constructPoll = async (db) => {
     try {
         const poll_test = db.collection("poll_test");
-        var arr = [];
+        var arr = {};
         const items = await poll_test.find().toArray();
         for (let i = 0; i < items.length; i++) {
-            var item = {
-                name: items[i].name,
-                votes: parseInt(items[i].votes)
-            };
-            arr.push(item);
+            arr[items[i].name] = items[i].votes;
         }
         return arr;
     }
@@ -102,8 +99,7 @@ app.post('/insert', async function (req, res) {
     var assetType = req.body.assetType;
     var assetName = req.body.assetName;
     var accountName = req.body.accountName;
-    var accountValue = parseFloat(req.body.accountValue);
-
+    var accountValue = mongodb.Double(req.body.accountValue);
 
     const asset_account_db = db.collection("asset_accounts");
 
@@ -120,6 +116,8 @@ app.post('/insert', async function (req, res) {
             value: accountValue,
             dollar_value: accountValue,
         }
+
+        console.log("asset_acount new: " + JSON.stringify(asset_account));
         asset_account_db
             .insertOne(asset_account)
             .then(
@@ -128,6 +126,7 @@ app.post('/insert', async function (req, res) {
             );
         // modify the total value to add value
     } else {
+        curr_account_total += accountValue;
         var query = {
             asset_type: assetType,
             account_name: accountName
@@ -137,8 +136,8 @@ app.post('/insert', async function (req, res) {
                 asset_type: assetType,
                 account_name: accountName,
                 last_transaction_date: new Date(),
-                value: curr_account_total + accountValue,
-                dollar_value: curr_account_total + accountValue
+                value: mongodb.Double(curr_account_total),
+                dollar_value: mongodb.Double(curr_account_total)
             }
         }
         asset_account_db
@@ -192,6 +191,7 @@ app.post('/insert', async function (req, res) {
             );
     // otherwise modify value
     } else {
+        asset_account_total += accountValue;
         var query = {
             asset_type: assetType,
             account_name: accountName,
@@ -203,8 +203,8 @@ app.post('/insert', async function (req, res) {
                 account_name: accountName,
                 asset_name: assetName,
                 last_transaction_date: new Date(),
-                value: asset_account_total + accountValue,
-                dollar_value: asset_account_total + accountValue
+                value: mongodb.Double(asset_account_total),
+                dollar_value: mongodb.Double(asset_account_total)
             }
         }
         asset_account_item_db
