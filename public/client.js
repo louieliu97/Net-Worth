@@ -3,21 +3,24 @@ console.log('Client-side code running');
 const insertButton = document.getElementById('insertButton');
 insertButton.addEventListener('click', function (e) {
     console.log('insertButton was clicked');
-    var tableSelect = document.getElementById('tableSelect');
+    var assetSelect = document.getElementById('assetSelect');
+    var assetName = document.getElementById('assetName');
     var accountName = document.getElementById('accountName');
     var accountValue = document.getElementById('accountValue');
 
-    var tName = String(tableSelect.value);
-    var aName = String(accountName.value);
-    var aValue = parseFloat(accountValue.value);
+    var assetTypeVal = String(assetSelect.value);
+    var assetNameVal = String(assetName.value);
+    var accountNameVal = String(accountName.value);
+    var accountValueVal = parseFloat(accountValue.value);
 
     accountName.value = "";
     accountValue.value = "";
 
     const response = {
-        tableName: tName,
-        accountName: aName,
-        accountValue: aValue
+        assetType: assetTypeVal,
+        assetName: assetNameVal,
+        accountName: accountNameVal,
+        accountValue: accountValueVal
     };
 
 
