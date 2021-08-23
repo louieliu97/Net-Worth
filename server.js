@@ -53,6 +53,23 @@ app.get('/assets', async function (req, res) {
     res.json(poll);
 });
 
+app.get('/networth', async function (req, res) {
+    try {
+        const assets_db = db.collection("total_assets");
+        const items = await assets_db.find().toArray();
+
+        var data = [];
+
+        for (let i = 0; i < items.length; i++) {
+            let item = items[i];
+            var d = { date: item.date, value: item.value };
+            data.push(d);
+        }
+        res.json(data);
+    }
+    catch (err) { console.error(err); }
+});
+
 const getAssetAccount = async (db, assetType, accountName) => {
     try {
         const asset_accounts = db.collection("asset_accounts");
