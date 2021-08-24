@@ -55,7 +55,7 @@ app.get('/assets', async function (req, res) {
 
 app.get('/networth', async function (req, res) {
     try {
-        const assets_db = db.collection("total_assets");
+        const assets_db = db.collection("total_assets_time");
         const items = await assets_db.find().toArray();
 
         var data = [];
@@ -257,6 +257,60 @@ const incAssetAccountItems = async (db, assetType, assetName, accountName, accou
     catch (err) { console.error(err); } // catch any mongo error here
 }
 
+
+const incTotalAssetsTime = async (db, accountValue, assetType) => {
+    try {
+        const total_assets_time_db = db.collection("total_assets_time");
+        const now = new Date();
+        var day = now.getDate();
+        var month = now.getMonth();
+        var year = now.getFullYear();
+
+        const date = new Date(year, month, day);
+
+        const assets = await total_assets_time_db.findOne({ date: date });
+        console.log("assets: " + assets);
+        
+        // If first time inserting this asset for this account, insert for first time
+        if (assets == null) {
+            const item = {
+                date: date,
+                value: accountValue,
+                asset_types: [assetType]
+            }
+            total_assets_time_db
+                .insertOne(item)
+                .then(
+                    res => console.log("Added to total_asset_time"),
+                    err => console.error(`Something went wrong: ${err}`)
+                );
+            // otherwise modify value
+        } else {
+            var totalValue = assets.value + mongodb.Double(accountValue);
+            const item = {
+                date: date
+            }
+            var replace = {
+                $inc: {
+                    value: totalValue
+                },
+                $addToSet: {
+                    asset_types: assetType
+                }
+                
+            }
+            total_assets_time_db
+                .updateOne(item, replace)
+                .then(
+                    res => console.log("Updated total_asset_time"),
+                    err => console.error(`Something went wrong: ${err}`)
+                );
+        }
+    }
+    catch (err) { console.error(err); } // catch any mongo error here
+}
+
+
 app.post('/insert', async function (req, res) {
     var assetType = req.body.assetType;
     var assetName = req.body.assetName;
@@ -266,7 +320,8 @@ app.post('/insert', async function (req, res) {
     await Promise.allSettled([incAsset(db, assetType, accountValue),
     incAssetAccount(db, assetType, accountName, accountValue),
     incAssetTransactions(db, assetType, assetName, accountName, accountValue),
-    incAssetAccountItems(db, assetType, assetName, accountName, accountValue)]);
+    incAssetAccountItems(db, assetType, assetName, accountName, accountValue),
+    incTotalAssetsTime(db, accountValue, assetType)]);
    
     res.sendStatus(201);
 })

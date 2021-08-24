@@ -1,11 +1,30 @@
 
 data = [
-    { date: new Date(2020, 1), high: 10.1, low: 9.1, open: 9.2, close: 9.4, volume: 2000 },
-    { date: new Date(2020, 2), high: 11.1, low: 8.1, open: 9.2, close: 10.4, volume: 1000 },
-    { date: new Date(2020, 3), high: 12.1, low: 10.1, open: 10.2, close: 11.4, volume: 3000 },
-    { date: new Date(2020, 4), high: 11.1, low: 9.1, open: 10.2, close: 10.4, volume: 4000 },
-    { date: new Date(2020, 5), high: 9.1, low: 8.1, open: 8.2, close: 8.4, volume: 2000 }
+    { date: new Date(2020, 1), value: 1000 },
+    { date: new Date(2020, 2), value: 1500 },
+    { date: new Date(2020, 3), value: 1250 },
+    { date: new Date(2020, 4), value: 1400 },
+    { date: new Date(2020, 5), value: 1600 }
 ]
+
+// add SVG to the page
+const margin = { top: 50, right: 50, bottom: 50, left: 50 };
+const width = window.innerWidth - margin.left - margin.right;
+const height = 600 - margin.top - margin.bottom;
+const svg = d3
+    .select("#networth-bar")
+    .append('svg')
+    .attr('width', width + margin.left + margin.right)
+    .attr('height', height + margin.top + margin.bottom)
+    .call(responsivefy)
+    .append('g')
+    .attr('transform', `translate(${margin.left},  ${margin.top})`);
+
+async function fetchNetWorth() {
+    fetch('http://localhost:8080/networth')
+        .then(response => response.json())
+        .then(networth => {updateChart(networth); });
+}
 
 function responsivefy(svg) {
     // get container + svg aspect ratio
@@ -36,20 +55,9 @@ function responsivefy(svg) {
 
 // set the dimensions and margins of the graph
 
-const initialiseChart = data => {
-    const margin = { top: 50, right: 50, bottom: 50, left: 50 };
-    console.log("inner width: " + window.innerWidth)
-    const width = window.innerWidth - margin.left - margin.right;
-    const height = 600 - margin.top - margin.bottom;
-    // add SVG to the page
-    const svg = d3
-        .select("#networth-bar")
-        .append('svg')
-        .attr('width', width + margin.left + margin.right)
-        .attr('height', height + margin.top + margin.bottom)
-        .call(responsivefy)
-        .append('g')
-        .attr('transform', `translate(${margin.left},  ${margin.top})`);
+const updateChart = data => {
+    // remove all old properties
+    svg.selectAll("g > *").remove();
 
     // find data range
     const xMin = d3.min(data, d => {
@@ -59,10 +67,10 @@ const initialiseChart = data => {
         return d['date'];
     });
     const yMin = d3.min(data, d => {
-        return d['close'];
+        return 0;
     });
     const yMax = d3.max(data, d => {
-        return d['close'];
+        return d['value'];
     });
     // scales for the charts
     const xScale = d3
@@ -71,7 +79,7 @@ const initialiseChart = data => {
         .range([0, width]);
     const yScale = d3
         .scaleLinear()
-        .domain([yMin - 5, yMax])
+        .domain([0, yMax])
         .range([height, 0]);
 
     // create the axes component
@@ -93,7 +101,7 @@ const initialiseChart = data => {
             return xScale(d['date']);
         })
         .y(d => {
-            return yScale(d['close']);
+            return yScale(d['value']);
         });
     // Append the path and bind data
     svg
@@ -125,17 +133,23 @@ const initialiseChart = data => {
         .attr('d', movingAverageLine);
 
     /* Volume series bars */
-    const volData = data.filter(d => d['volume'] !== null && d['volume'] !== 0);
-    const yMinVolume = d3.min(volData, d => {
-        return Math.min(d['volume']);
+    let volData = []
+    for (let i = data.length-1; i > 0; i--) {
+        volData.unshift({ date: data[i]["date"], value: data[i]["value"] - data[i - 1]["value"] });
+    }
+    //volData.unshift({ date: data[0]["date"], value: 0});
+    console.log("voldata after: " + JSON.stringify(volData));
+
+    const yMinValue = d3.min(volData, d => {
+        return Math.min(Math.abs(d['value']));
     });
-    const yMaxVolume = d3.max(volData, d => {
-        return Math.max(d['volume']);
+    const yMaxValue = d3.max(volData, d => {
+        return Math.max(Math.abs(d['value']));
     });
     const yVolumeScale = d3
         .scaleLinear()
-        .domain([yMinVolume, yMaxVolume])
-        .range([height, 0]);
+        .domain([yMinValue, yMaxValue])
+        .range([0, height/2]);
 
     svg
         .selectAll()
@@ -146,18 +160,18 @@ const initialiseChart = data => {
             return xScale(d['date']);
         })
         .attr('y', d => {
-            return yVolumeScale(d['volume']);
+            return height - yVolumeScale(Math.abs(d["value"]));
         })
         .attr('fill', (d, i) => {
             if (i === 0) {
                 return '#03a678';
             } else {
-                return volData[i - 1].close > d.close ? '#c0392b' : '#03a678';
+                return d.value < 0 ? '#c0392b' : '#03a678';
             }
         })
         .attr('width', 1)
         .attr('height', d => {
-            return height - yVolumeScale(d['volume']);
+            return yVolumeScale(Math.abs(d['value']));
         });
 
     // renders x and y crosshair
@@ -214,12 +228,35 @@ const initialiseChart = data => {
             .attr('x1', 0)
             .attr('x2', 0)
             .attr('y1', 0)
-            .attr('y2', height - yScale(currentPoint['close']));
+            .attr('y2', height - yScale(currentPoint['value']));
 
         // updates the legend to display the date, open, close, high, low, and volume of the selected mouseover area
+        const updateLegends = currentData => {
+            d3.selectAll('.lineLegend').remove();
+            const legendKeys = Object.keys(data[0]);
+            const lineLegend = svg
+                .selectAll('.lineLegend')
+                .data(legendKeys)
+                .enter()
+                .append('g')
+                .attr('class', 'lineLegend')
+                .attr('transform', (d, i) => {
+                    return `translate(0, ${i * 20})`;
+                });
+            lineLegend
+                .append('text')
+                .text(d => {
+                    if (d === 'date') {
+                        return `${d}: ${currentData[d].toLocaleDateString()}`;
+                    } else {
+                        return `${d}: ${currentData[d]}`;
+                    }
+                })
+                .style('fill', 'white')
+                .attr('transform', 'translate(15,9)');
+        };
         updateLegends(currentPoint);
     }
-
 }
 
 const movingAverage = (data, numberOfPricePoints) => {
@@ -228,7 +265,7 @@ const movingAverage = (data, numberOfPricePoints) => {
         const end = index;
         const subset = total.slice(start, end + 1);
         const sum = subset.reduce((a, b) => {
-            return a + b['close'];
+            return a + b['value'];
         }, 0);
         return {
             date: row['date'],
@@ -237,31 +274,5 @@ const movingAverage = (data, numberOfPricePoints) => {
     });
 };
 
-const updateLegends = currentData => {
-    d3.selectAll('.lineLegend').remove();
-    const legendKeys = Object.keys(data[0]);
-    const lineLegend = svg
-        .selectAll('.lineLegend')
-        .data(legendKeys)
-        .enter()
-        .append('g')
-        .attr('class', 'lineLegend')
-        .attr('transform', (d, i) => {
-            return `translate(0, ${i * 20})`;
-        });
-    lineLegend
-        .append('text')
-        .text(d => {
-            if (d === 'date') {
-                return `${d}: ${currentData[d].toLocaleDateString()}`;
-            } else if (d === 'high' || d === 'low' || d === 'open' || d === 'close') {
-                return `${d}: ${currentData[d].toFixed(2)}`;
-            } else {
-                return `${d}: ${currentData[d]}`;
-            }
-        })
-        .style('fill', 'white')
-        .attr('transform', 'translate(15,9)');
-};
-
-initialiseChart(data);
+//fetchNetWorth();
+updateChart(data);

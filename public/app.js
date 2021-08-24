@@ -1,7 +1,4 @@
-﻿// app.js
-console.log('Client-side code running');
-
-// set the dimensions and margins of the graph
+﻿// set variables for pie_chart
 const pie_margin = 100;
 const pie_width = 600 - pie_margin;
 const pie_height = 600 - pie_margin;
@@ -35,6 +32,12 @@ var pie_outerArc = d3.arc()
 const color = d3.scaleOrdinal()
     .domain(["cash", "crypto", "investments"])
     .range(d3.schemeDark2);
+
+// end variables for pie chart
+
+// set variables for net-worth chart
+
+// end variables for net-worth chart
 
 // Get the poll data from the `/poll` endpoint
 async function fetchAssets() {
