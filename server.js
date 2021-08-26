@@ -203,6 +203,7 @@ const incAssetTransactions = async (db, assetType, assetName, accountName, accou
     catch (err) { console.error(err); } // catch any mongo error here
 }
 
+
 const incAssetAccountItems = async (db, assetType, assetName, accountName, accountValue) => {
     try {
         const asset_account_item_db = db.collection("asset_accounts_items");
@@ -257,7 +258,43 @@ const incAssetAccountItems = async (db, assetType, assetName, accountName, accou
     catch (err) { console.error(err); } // catch any mongo error here
 }
 
+const getAssetTimeObject = async (total_assets_time_db, date) => {
+    try {
+        return total_assets_time_db.findOne({ date: date });
+    }
+    catch (err) { console.error(err); } // catch any mongo error here
+}
 
+const setPrevAssetsTime = async (total_assets_time_db, date, root) => {
+    try {
+        var yesterday = new Date(date);
+        yesterday.setDate(date.getDate() - 1);
+        console.log("today: " + date);
+        console.log("yesterday: " + yesterday);
+        var asset = await getAssetTimeObject(total_assets_time_db, yesterday);
+        console.log("asset: " + asset);
+        if (asset == null) {
+            console.log("recursing");
+            await setPrevAssetsTime(total_assets_time_db, yesterday, false)
+        }
+
+        if (root == false) {
+            asset = await getAssetTimeObject(total_assets_time_db, yesterday);
+            console.log("asset after: " + asset);
+            const item = {
+                date: date,
+                value: asset.value,
+                asset_types: asset.asset_types
+            }
+            total_assets_time_db.insertOne(item)
+                .then(
+                    res => console.log("Added to total_assets_time on " + item.date),
+                    err => console.error(`Something went wrong: ${err}`)
+                );
+        }
+    }
+    catch (err) { console.error(err); } // catch any mongo error here
+}
 const incTotalAssetsTime = async (db, accountValue, assetType) => {
     try {
         const total_assets_time_db = db.collection("total_assets_time");
@@ -267,15 +304,23 @@ const incTotalAssetsTime = async (db, accountValue, assetType) => {
         var year = now.getFullYear();
 
         const date = new Date(year, month, day);
+        var yesterday = new Date(date);
+        yesterday.setDate(date.getDate() - 1);
 
-        const assets = await total_assets_time_db.findOne({ date: date });
+        const assets = await getAssetTimeObject(total_assets_time_db, date);
         console.log("assets: " + assets);
         
         // If first time inserting this asset for this account, insert for first time
         if (assets == null) {
+            // First grab yesterdays date
+            await setPrevAssetsTime(total_assets_time_db, date);
+            const yesterdayAsset = await getAssetTimeObject(total_assets_time_db, yesterday, true);
+            console.log("yesterdayAsset: " + yesterdayAsset);
+            var yesterdayValue = yesterdayAsset.value;
+            console.log("yest: " + yesterdayValue);
             const item = {
                 date: date,
-                value: accountValue,
+                value: yesterdayValue + mongodb.Double(accountValue),
                 asset_types: [assetType]
             }
             total_assets_time_db
@@ -309,7 +354,6 @@ const incTotalAssetsTime = async (db, accountValue, assetType) => {
     }
     catch (err) { console.error(err); } // catch any mongo error here
 }
-
 
 app.post('/insert', async function (req, res) {
     var assetType = req.body.assetType;
