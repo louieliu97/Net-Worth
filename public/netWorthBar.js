@@ -1,17 +1,17 @@
 
 
 // add SVG to the page
-const margin = { top: 50, right: 50, bottom: 50, left: 50 };
-const width = window.innerWidth - margin.left - margin.right;
-const height = 600 - margin.top - margin.bottom;
-const svg = d3
+const nw_margin = { top: 50, right: 50, bottom: 50, left: 50 };
+const nw_width = window.innerWidth - nw_margin.left - nw_margin.right;
+const nw_height = 600 - nw_margin.top - nw_margin.bottom;
+const networthBar = d3
     .select("#networth-bar")
     .append('svg')
-    .attr('width', width + margin.left + margin.right)
-    .attr('height', height + margin.top + margin.bottom)
+    .attr('width', nw_width + nw_margin.left + nw_margin.right)
+    .attr('height', nw_height + nw_margin.top + nw_margin.bottom)
     .call(responsivefy)
     .append('g')
-    .attr('transform', `translate(${margin.left},  ${margin.top})`);
+    .attr('transform', `translate(${nw_margin.left},  ${nw_margin.top})`);
 
 async function fetchNetWorth() {
     fetch('http://localhost:8080/networth')
@@ -30,13 +30,13 @@ async function fetchNetWorth() {
 function responsivefy(svg) {
     // get container + svg aspect ratio
     var container = d3.select(svg.node().parentNode),
-        width = parseInt(svg.style("width")),
-        height = parseInt(svg.style("height")),
-        aspect = width / height;
+        nw_width = parseInt(svg.style("width")),
+        nw_height = parseInt(svg.style("height")),
+        aspect = nw_width / nw_height;
 
     // add viewBox and preserveAspectRatio properties,
     // and call resize so that svg resizes on inital page load
-    svg.attr("viewBox", "0 0 " + width + " " + height)
+    svg.attr("viewBox", "0 0 " + nw_width + " " + nw_height)
         .attr("perserveAspectRatio", "xMinYMid")
         .call(resize);
 
@@ -54,7 +54,7 @@ function responsivefy(svg) {
     }
 }
 
-// set the dimensions and margins of the graph
+// set the dimensions and nw_margins of the graph
 const updateDateRange = function (svg, firstDate) {
     // first null out attribute to remove it
 
@@ -64,7 +64,7 @@ const updateDateRange = function (svg, firstDate) {
     const xScale = d3
         .scaleTime()
         .domain([xMin, xMax])
-        .range([0, width])
+        .range([0, nw_width])
 
     svg
         .selectAll("g")
@@ -77,7 +77,7 @@ const updateDateRange = function (svg, firstDate) {
 
 const updateChart = data => {
     // remove all old properties
-    svg.selectAll("g > *").remove();
+    networthBar.selectAll("g > *").remove();
 
     // find data range
     const xMin = d3.min(data, d => {
@@ -96,22 +96,22 @@ const updateChart = data => {
     const xScale = d3
         .scaleTime()
         .domain([xMin, xMax])
-        .range([0, width]);
+        .range([0, nw_width]);
     const yScale = d3
         .scaleLinear()
         .domain([0, yMax])
-        .range([height, 0]);
+        .range([nw_height, 0]);
 
     // create the axes component
-    svg
+    networthBar
         .append('g')
         .attr('id', 'xAxis')
-        .attr('transform', `translate(0, ${height})`)
+        .attr('transform', `translate(0, ${nw_height})`)
         .call(d3.axisBottom(xScale));
-    svg
+    networthBar
         .append('g')
         .attr('id', 'yAxis')
-        .attr('transform', `translate(${width}, 0)`)
+        .attr('transform', `translate(${nw_width}, 0)`)
         .call(d3.axisRight(yScale));
 
     // generates close price line chart when called
@@ -124,7 +124,7 @@ const updateChart = data => {
             return yScale(d['value']);
         });
     // Append the path and bind data
-    svg
+    networthBar
         .append('path')
         .data([data])
         .style('fill', 'none')
@@ -144,7 +144,7 @@ const updateChart = data => {
             return yScale(d['value']);
         })
         .curve(d3.curveBasis);
-    svg
+    networthBar
         .append('path')
         .data([movingAverageData])
         .style('fill', 'none')
@@ -167,9 +167,9 @@ const updateChart = data => {
     const yVolumeScale = d3
         .scaleLinear()
         .domain([yMinValue, yMaxValue])
-        .range([0, height/2]);
+        .range([0, nw_height/2]);
 
-    svg
+    networthBar
         .selectAll()
         .data(volData)
         .enter()
@@ -178,7 +178,7 @@ const updateChart = data => {
             return xScale(d['date']);
         })
         .attr('y', d => {
-            return height - yVolumeScale(Math.abs(d['value']));
+            return nw_height - yVolumeScale(Math.abs(d['value']));
         })
         .attr('fill', (d, i) => {
             if (i === 0) {
@@ -193,18 +193,18 @@ const updateChart = data => {
         });
 
     // renders x and y crosshair
-    const focus = svg
+    const focus = networthBar
         .append('g')
         .attr('class', 'focus')
         .style('display', 'none');
     focus.append('circle').attr('r', 4.5);
     focus.append('line').classed('x', true);
     focus.append('line').classed('y', true);
-    svg
+    networthBar
         .append('rect')
         .attr('class', 'overlay')
-        .attr('width', width)
-        .attr('height', height)
+        .attr('width', nw_width)
+        .attr('height', nw_height)
         .on('mouseover', () => focus.style('display', null))
         .on('mouseout', () => focus.style('display', 'none'))
         .on('mousemove', generateCrosshair);
@@ -236,7 +236,7 @@ const updateChart = data => {
         focus
             .select('line.x')
             .attr('x1', 0)
-            .attr('x2', width - xScale(currentPoint['date']))
+            .attr('x2', nw_width - xScale(currentPoint['date']))
             .attr('y1', 0)
             .attr('y2', 0);
 
@@ -245,7 +245,7 @@ const updateChart = data => {
             .attr('x1', 0)
             .attr('x2', 0)
             .attr('y1', 0)
-            .attr('y2', height - yScale(currentPoint['value']));
+            .attr('y2', nw_height - yScale(currentPoint['value']));
     }
 }
 
@@ -265,8 +265,3 @@ const movingAverage = (data, numberOfPricePoints) => {
 };
 
 fetchNetWorth();
-
-var d = new Date();
-d.setMonth(d.getMonth() - 12);
-
-//updateDateRange(svg, d);
