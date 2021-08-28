@@ -58,7 +58,6 @@ async function fetchNetWorth() {
                 networth[i].date = new Date(networth[i].date);
             }
             const sortedNetWorth = networth.sort(function (a, b) { return a.date - b.date });
-            console.log("sorted: " + JSON.stringify(sortedNetWorth));
             updateChart(sortedNetWorth);
         });
 }
@@ -69,10 +68,8 @@ async function fetchAssets() {
     fetch('http://localhost:8080/assets')
         .then(response => response.json())
         .then(assets => {
-            console.log(JSON.stringify(assets));
             const data_ready = pie(Object.entries(assets));
             updatePie(data_ready, pie_arc, pie_outerArc);
-            console.log("updated pie");
         });
 }
 
@@ -174,7 +171,6 @@ const updateDateRange = function (svg, firstDate) {
 
 
 const updateChart = data => {
-    console.log("updating chart, data: " + JSON.stringify(data));
     // remove all old properties
     networthBar.selectAll("g > *").remove();
 
@@ -232,7 +228,9 @@ const updateChart = data => {
         .attr('stroke-width', '1.5')
         .attr('d', line);
 
-    const movingAverageData = movingAverage(data, data.length);
+    const movingAverageData = movingAverage(data, 2);
+    console.log("moving avg data: " + JSON.stringify(movingAverageData));
+    console.log("updating chart, data: " + JSON.stringify(data));
     // generates moving average curve when called
     const movingAverageLine = d3
         .line()
@@ -240,9 +238,10 @@ const updateChart = data => {
             return xScale(d['date']);
         })
         .y(d => {
-            return yScale(d['value']);
+            return yScale(d['average']);
         })
         .curve(d3.curveBasis);
+
     networthBar
         .append('path')
         .data([movingAverageData])
