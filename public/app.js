@@ -295,23 +295,26 @@ const updateChart = data => {
         .append('g')
         .attr('class', 'focus')
         .style('display', 'none');
+
+    var focusText = networthBar
+        .append('g')
+        .append('text')
+        .style("opacity", 0)
+        .attr("text-anchor", "left")
+        .attr("alignment-baseline", "middle")
+
     focus.append('circle').attr('r', 4.5);
-    focus.append('line').classed('x', true);
-    focus.append('line').classed('y', true);
     networthBar
         .append('rect')
         .attr('class', 'overlay')
         .attr('width', nw_width)
         .attr('height', nw_height)
-        .on('mouseover', () => focus.style('display', null))
-        .on('mouseout', () => focus.style('display', 'none'))
+        .on('mouseover', () => { focus.style('display', null); focusText.style("opacity", 1); })
+        .on('mouseout', () => { focus.style('display', 'none'); focusText.style("opacity", 0); })
         .on('mousemove', generateCrosshair);
+
     d3.select('.overlay').style('fill', 'none');
     d3.select('.overlay').style('pointer-events', 'all');
-    d3.selectAll('.focus line').style('fill', 'none');
-    d3.selectAll('.focus line').style('stroke', '#67809f');
-    d3.selectAll('.focus line').style('stroke-width', '1.5px');
-    d3.selectAll('.focus line').style('stroke-dasharray', '3 3');
 
     //returs insertion point
     const bisectDate = d3.bisector(d => d['date']).left;
@@ -331,20 +334,14 @@ const updateChart = data => {
                 currentPoint['value']
             )})`
         );
-        focus
-            .select('line.x')
-            .attr('x1', 0)
-            .attr('x2', nw_width - xScale(currentPoint['date']))
-            .attr('y1', 0)
-            .attr('y2', 0);
+        focusText
+            .html("value: " + currentPoint['value'])
+            .attr("x", xScale(currentPoint['date']))
+            .attr("y", yScale(currentPoint['value'])-25);
 
-        focus
-            .select('line.y')
-            .attr('x1', 0)
-            .attr('x2', 0)
-            .attr('y1', 0)
-            .attr('y2', nw_height - yScale(currentPoint['value']));
     }
+
+
 }
 
 const movingAverage = (data, numberOfPricePoints) => {
