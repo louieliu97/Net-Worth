@@ -63,13 +63,28 @@ const getTotalAssetsTimeArray = async (total_assets_time_db) => {
     return items;
 }
 
+app.post('/networth-date', async function (req, res) {
+    try {
+        var startDate = new Date(req.body.startDate);
+        var endDate = new Date(req.body.endDate);
+
+        const total_assets_time_db = db.collection("total_assets_time");
+        var assetsRangeArr = await total_assets_time_db.find({
+            date: {
+                $gt: startDate.toISOString(), $lte: endDate.toISOString()
+            }
+        }).toArray();
+        res.json(assetsRangeArr);
+    }
+    catch (err) { console.error(err); }
+});
+
 app.get('/networth', async function (req, res) {
     try {
         const total_assets_time_db = db.collection("total_assets_time");
         const items = await getTotalAssetsTimeArray(total_assets_time_db);
 
         var data = [];
-        console.log("items: " + JSON.stringify(items));
 
         for (let i = 0; i < items.length; i++) {
             let item = items[i];
@@ -280,9 +295,12 @@ const setPrevAssetsTime = async (total_assets_time_db, date, root) => {
     try {
         var yesterday = new Date(date);
         yesterday.setDate(date.getDate() - 1);
+        yesterday.setHours(0, 0, 0, 0);
         var asset = await getAssetTimeObject(total_assets_time_db, yesterday);
         if (asset == null) {
             await setPrevAssetsTime(total_assets_time_db, yesterday, false)
+        } else {
+            console.log("asset: " + asset.date);
         }
 
         if (root == false) {
@@ -323,12 +341,13 @@ const incTotalAssetsTime = async (db, accountValue, assetType) => {
         yesterday.setDate(date.getDate() - 1);
 
         const assets = await getAssetTimeObject(total_assets_time_db, date);
-        const assets_empty = checkTotalAssetsEmpty(total_assets_time_db);
+        const assets_empty = await checkTotalAssetsEmpty(total_assets_time_db);
 
         // If first time inserting this asset for this account, insert for first time
         if (assets == null) {
             // potentially skip if this is the first ever entry
             var yesterdayValue = mongodb.Double(0);
+            console.log("assets empty: " + assets_empty);
             if (assets_empty == false) {
                 console.log("assets not empty");
                 await setPrevAssetsTime(total_assets_time_db, date);
@@ -393,7 +412,21 @@ app.post('/insert', async function (req, res) {
     await incrementDB(db, assetType, assetName, accountName, accountValue);
     console.log("Done inserting all!");
     res.sendStatus(201);
- 
+})
+
+app.post('/insertAssetTimeTest', async function (req, res) {
+    var startDate = new Date(req.body.startDate);
+    var endDate = new Date(req.body.endDate);
+    var difftime = startDate.getTime() - endDate.getTime();
+    var diffDays = parseInt(difftime / (1000 * 3600 * 24));
+    const total_assets_time_db = db.collection("total_assets_time");
+    for (let i = 0; i < diffDays; i++) {
+        var ranval = mongodb.Double(Math.floor(Math.random() * (50000 - 5000) + 5000));
+        item = { date: endDate.toISOString(), value: ranval, asset_types: ["cash"]};
+        await total_assets_time_db.insertOne(item);
+        endDate.setDate(endDate.getDate() + 1);
+    }
+    console.log("inserted " + diffDays + " items");
 })
 
 app.post('/query', (req, res) => {

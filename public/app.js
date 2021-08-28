@@ -52,14 +52,34 @@ const networthBar = d3
 async function fetchNetWorth() {
     fetch('http://localhost:8080/networth')
         .then(response => response.json())
-        .then(networth => {
+        .then(async networth => {
             // for some reason date conversion doesn't work on server side, so do it on client side
             for (let i = 0; i < networth.length; i++) {
                 networth[i].date = new Date(networth[i].date);
             }
             const sortedNetWorth = networth.sort(function (a, b) { return a.date - b.date });
-            updateChart(sortedNetWorth);
+            await updateChart(sortedNetWorth);
         });
+}
+
+async function fetchNetWorthDate(startDate, endDate) {
+    console.log("start: " + startDate + " end: " + endDate);
+    fetch('http://localhost:8080/networth-date', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            startDate: startDate,
+            endDate: endDate
+        })
+    }) .then(response => response.json())
+            .then(async networth => {
+                // for some reason date conversion doesn't work on server side, so do it on client side
+                for (let i = 0; i < networth.length; i++) {
+                    networth[i].date = new Date(networth[i].date);
+                }
+                const sortedNetWorth = networth.sort(function (a, b) { return a.date - b.date });
+                await updateChart(sortedNetWorth);
+            });
 }
 // add SVG to the page
 
@@ -150,7 +170,7 @@ function responsivefy(svg) {
 }
 
 // set the dimensions and nw_margins of the graph
-const updateDateRange = function (svg, firstDate) {
+const updateDateRange = function (svg, firstDate, data) {
     // first null out attribute to remove it
 
     xMin = firstDate;
@@ -170,7 +190,8 @@ const updateDateRange = function (svg, firstDate) {
 }
 
 
-const updateChart = data => {
+const updateChart = async data => {
+    console.log("updating chart: " + data.length);
     // remove all old properties
     networthBar.selectAll("g > *").remove();
 
@@ -228,9 +249,7 @@ const updateChart = data => {
         .attr('stroke-width', '1.5')
         .attr('d', line);
 
-    const movingAverageData = movingAverage(data, 2);
-    console.log("moving avg data: " + JSON.stringify(movingAverageData));
-    console.log("updating chart, data: " + JSON.stringify(data));
+    const movingAverageData = movingAverage(data, data.length/2);
     // generates moving average curve when called
     const movingAverageLine = d3
         .line()
@@ -335,13 +354,8 @@ const updateChart = data => {
             )})`
         );
         focusText
-            .html("value: " + currentPoint['value'])
-            .attr("x", xScale(currentPoint['date']))
-            .attr("y", yScale(currentPoint['value'])-25);
-
+            .html("value: " + currentPoint['value'] + " date: " + currentPoint['date'])
     }
-
-
 }
 
 const movingAverage = (data, numberOfPricePoints) => {
@@ -398,6 +412,93 @@ insertButton.addEventListener('click', function (e) {
 
 });
 
+function wait(ms) {
+    var start = new Date().getTime();
+    var end = start;
+    while (end < start + ms)
+        end = new Date().getTime();
+}
 
-fetchAssets();
-fetchNetWorth();
+const oneWeekButton = document.getElementById('1week');
+oneWeekButton.addEventListener('click', async function (e) {
+    var today = new Date();
+    var start = new Date();
+    start.setDate(start.getDate() - 7);
+    await fetchNetWorthDate(start, today);
+});
+
+const oneMonthButton = document.getElementById('1month');
+oneMonthButton.addEventListener('click', async function (e) {
+    var today = new Date();
+    var start = new Date();
+    start.setMonth(start.getMonth() - 1);
+    await fetchNetWorthDate(start, today);
+});
+
+const threeMonthButton = document.getElementById('3month');
+threeMonthButton.addEventListener('click', async function (e) {
+    var today = new Date();
+    var start = new Date();
+    start.setMonth(start.getMonth() - 3);
+    await fetchNetWorthDate(start, today);
+});
+
+const sixMonthButton = document.getElementById('6month');
+sixMonthButton.addEventListener('click', async function (e) {
+    var today = new Date();
+    var start = new Date();
+    start.setMonth(start.getMonth() - 6);
+    await fetchNetWorthDate(start, today);
+});
+
+const oneYearButton = document.getElementById('1year');
+oneYearButton.addEventListener('click', async function (e) {
+    var today = new Date();
+    var start = new Date();
+    start.setMonth(start.getMonth() - 12);
+    await fetchNetWorthDate(start, today);
+});
+
+const threeYearButton = document.getElementById('3year');
+threeYearButton.addEventListener('click', async function (e) {
+    var today = new Date();
+    var start = new Date();
+    start.setMonth(start.getMonth() - 36);
+    await fetchNetWorthDate(start, today);
+});
+
+const fiveYearButton = document.getElementById('5year');
+threeYearButton.addEventListener('click', async function (e) {
+    var today = new Date();
+    var start = new Date();
+    start.setMonth(start.getMonth() - 60);
+    await fetchNetWorthDate(start, today);
+});
+
+const lifetimeButton = document.getElementById('lifetime');
+lifetimeButton.addEventListener('click', async function (e) {
+    await fetchNetWorth();
+});
+
+async function fetchData() {
+    await fetchAssets();
+    await fetchNetWorth();
+}
+
+function addData(startDate, endDate) {
+    fetch('/insertAssetTimeTest', {
+        method: 'POST',
+        body: JSON.stringify({ startDate: startDate, endDate: endDate }),
+        headers: { 'Content-Type': 'application/json' }
+    }).then(res => console.log(res)
+    ).catch(function (error) {
+            console.log(error);
+        })
+}
+
+var startdate = new Date();
+var enddate = new Date();
+enddate.setMonth(enddate.getMonth() - 60);
+//addData(startdate, enddate);
+
+fetchData();
