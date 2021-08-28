@@ -36,8 +36,8 @@ const color = d3.scaleOrdinal()
 // end variables for pie chart
 
 // set variables for net-worth chart
+// add SVG to the page
 
-// end variables for net-worth chart
 
 // Get the poll data from the `/poll` endpoint
 async function fetchAssets() {
@@ -47,9 +47,9 @@ async function fetchAssets() {
             console.log(JSON.stringify(assets));
             const data_ready = pie(Object.entries(assets));
             updatePie(data_ready, pie_arc, pie_outerArc);
-            return data_ready;
         });
 }
+
 
 function updatePie(data_ready, pie_arc, pie_outerArc) {
     // remove all old properties
@@ -100,6 +100,7 @@ function updatePie(data_ready, pie_arc, pie_outerArc) {
         })
 }
 
+// //////////////////////////////////////////
 const insertButton = document.getElementById('insertButton');
 insertButton.addEventListener('click', function (e) {
     var assetSelect = document.getElementById('assetSelect');
@@ -124,7 +125,6 @@ insertButton.addEventListener('click', function (e) {
         accountValue: accountValueVal
     };
 
-
     fetch('/insert', {
         method: 'POST',
         body: JSON.stringify(response),
@@ -132,7 +132,9 @@ insertButton.addEventListener('click', function (e) {
     }).then(res => fetchAssets())
         .catch(function (error) {
             console.log(error);
-        });
+        })
 });
+
+
 
 fetchAssets();

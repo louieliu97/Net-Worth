@@ -269,12 +269,8 @@ const setPrevAssetsTime = async (total_assets_time_db, date, root) => {
     try {
         var yesterday = new Date(date);
         yesterday.setDate(date.getDate() - 1);
-        console.log("today: " + date);
-        console.log("yesterday: " + yesterday);
         var asset = await getAssetTimeObject(total_assets_time_db, yesterday);
-        console.log("asset: " + asset);
         if (asset == null) {
-            console.log("recursing");
             await setPrevAssetsTime(total_assets_time_db, yesterday, false)
         }
 
@@ -295,6 +291,15 @@ const setPrevAssetsTime = async (total_assets_time_db, date, root) => {
     }
     catch (err) { console.error(err); } // catch any mongo error here
 }
+
+const checkTotalAssetsEmpty = async (total_assets_time_db) => {
+    var db_length = await total_assets_time_db.count();
+    if (db_length == 0)
+        return true;
+    else
+        return false;
+}
+
 const incTotalAssetsTime = async (db, accountValue, assetType) => {
     try {
         const total_assets_time_db = db.collection("total_assets_time");
@@ -308,19 +313,23 @@ const incTotalAssetsTime = async (db, accountValue, assetType) => {
         yesterday.setDate(date.getDate() - 1);
 
         const assets = await getAssetTimeObject(total_assets_time_db, date);
-        console.log("assets: " + assets);
-        
+        const assets_empty = checkTotalAssetsEmpty(total_assets_time_db);
+
         // If first time inserting this asset for this account, insert for first time
         if (assets == null) {
-            // First grab yesterdays date
-            await setPrevAssetsTime(total_assets_time_db, date);
-            const yesterdayAsset = await getAssetTimeObject(total_assets_time_db, yesterday, true);
-            console.log("yesterdayAsset: " + yesterdayAsset);
-            var yesterdayValue = yesterdayAsset.value;
-            console.log("yest: " + yesterdayValue);
-            const item = {
-                date: date,
-                value: yesterdayValue + mongodb.Double(accountValue),
+            // potentially skip if this is the first ever entry
+            var yesterdayValue = mongodb.Double(0);
+            if (assets_empty == false) {
+                console.log("assets not empty");
+                await setPrevAssetsTime(total_assets_time_db, date);
+                const yesterdayAsset = await getAssetTimeObject(total_assets_time_db, yesterday, true);
+                yesterdayValue = yesterdayAsset.value;
+            }
+            yesterdayValue += mongodb.Double(accountValue);
+            yesterdayValue = mongodb.Double(yesterdayValue);
+            const item = {  
+                date: date.toISOString(),
+                value: yesterdayValue,
                 asset_types: [assetType]
             }
             total_assets_time_db
