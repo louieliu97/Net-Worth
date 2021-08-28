@@ -34,11 +34,16 @@ app.get('/', (req, res) => {
     res.sendFile(__dirname + '/index.html');
 });
 
+const getAssetsArray = async (assets_db) => {
+    const items = await assets_db.find().toArray();
+    return items;
+}
+
 const constructAssets = async (db) => {
     try {
         const assets_db = db.collection("assets");
         var json = {};
-        const items = await assets_db.find().toArray();
+        var items = await getAssetsArray(assets_db);
 
         for (let i = 0; i < items.length; i++) {
             json[items[i].asset_type] = items[i].value;
@@ -53,12 +58,18 @@ app.get('/assets', async function (req, res) {
     res.json(poll);
 });
 
+const getTotalAssetsTimeArray = async (total_assets_time_db) => {
+    const items = await total_assets_time_db.find().toArray();
+    return items;
+}
+
 app.get('/networth', async function (req, res) {
     try {
-        const assets_db = db.collection("total_assets_time");
-        const items = await assets_db.find().toArray();
+        const total_assets_time_db = db.collection("total_assets_time");
+        const items = await getTotalAssetsTimeArray(total_assets_time_db);
 
         var data = [];
+        console.log("items: " + JSON.stringify(items));
 
         for (let i = 0; i < items.length; i++) {
             let item = items[i];
@@ -260,7 +271,7 @@ const incAssetAccountItems = async (db, assetType, assetName, accountName, accou
 
 const getAssetTimeObject = async (total_assets_time_db, date) => {
     try {
-        return total_assets_time_db.findOne({ date: date });
+        return total_assets_time_db.findOne({ date: date.toISOString() });
     }
     catch (err) { console.error(err); } // catch any mongo error here
 }
@@ -276,9 +287,8 @@ const setPrevAssetsTime = async (total_assets_time_db, date, root) => {
 
         if (root == false) {
             asset = await getAssetTimeObject(total_assets_time_db, yesterday);
-            console.log("asset after: " + asset);
             const item = {
-                date: date,
+                date: date.toISOString(),
                 value: asset.value,
                 asset_types: asset.asset_types
             }
@@ -332,7 +342,7 @@ const incTotalAssetsTime = async (db, accountValue, assetType) => {
                 value: yesterdayValue,
                 asset_types: [assetType]
             }
-            total_assets_time_db
+            await total_assets_time_db
                 .insertOne(item)
                 .then(
                     res => console.log("Added to total_asset_time"),
@@ -340,20 +350,19 @@ const incTotalAssetsTime = async (db, accountValue, assetType) => {
                 );
             // otherwise modify value
         } else {
-            var totalValue = assets.value + mongodb.Double(accountValue);
             const item = {
-                date: date
+                date: date.toISOString()
             }
             var replace = {
                 $inc: {
-                    value: totalValue
+                    value: mongodb.Double(accountValue)
                 },
                 $addToSet: {
                     asset_types: assetType
                 }
                 
             }
-            total_assets_time_db
+            await total_assets_time_db
                 .updateOne(item, replace)
                 .then(
                     res => console.log("Updated total_asset_time"),
@@ -364,19 +373,27 @@ const incTotalAssetsTime = async (db, accountValue, assetType) => {
     catch (err) { console.error(err); } // catch any mongo error here
 }
 
+const incrementDB = async function (db, assetType, assetName, accountName, accountValue) {
+    var p1 = await incAsset(db, assetType, accountValue);
+    var p2 = await incAssetAccount(db, assetType, accountName, accountValue);
+    var p3 = await incAssetTransactions(db, assetType, assetName, accountName, accountValue);
+    var p4 = await incAssetAccountItems(db, assetType, assetName, accountName, accountValue);
+    var p5 = await incTotalAssetsTime(db, accountValue, assetType);
+
+    await Promise.all([p1, p2, p3, p4, p5])
+        .catch(err => { console.error(err) });
+}
+
 app.post('/insert', async function (req, res) {
     var assetType = req.body.assetType;
     var assetName = req.body.assetName;
     var accountName = req.body.accountName;
     var accountValue = mongodb.Double(req.body.accountValue);
 
-    await Promise.allSettled([incAsset(db, assetType, accountValue),
-    incAssetAccount(db, assetType, accountName, accountValue),
-    incAssetTransactions(db, assetType, assetName, accountName, accountValue),
-    incAssetAccountItems(db, assetType, assetName, accountName, accountValue),
-    incTotalAssetsTime(db, accountValue, assetType)]);
-   
+    await incrementDB(db, assetType, assetName, accountName, accountValue);
+    console.log("Done inserting all!");
     res.sendStatus(201);
+ 
 })
 
 app.post('/query', (req, res) => {
