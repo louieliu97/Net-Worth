@@ -17,21 +17,21 @@ var asset_pie = d3.select("#asset-pie")
     .append('g')
     .attr("transform", `translate(${pie_width / 2}, ${pie_height / 2})`);
 
-var pie = d3.pie()
-    .sort(null)
-    .value(function (d) { return d[1]; })
+asset_pie.on("click", function() {
+  var coords = d3.mouse(this);
+  console.log(coords);
+})
 
-var pie_arc = d3.arc()
-    .innerRadius(radius * 0.5)
-    .outerRadius(radius * 0.8)
-
-var pie_outerArc = d3.arc()
-    .innerRadius(radius * 0.9)
-    .outerRadius(radius * 0.9)
+var arcGenerator = d3.arc()
+  .innerRadius(0)
+  .outerRadius(radius);
 
 const color = d3.scaleOrdinal()
     .domain(["cash", "crypto", "investments"])
     .range(d3.schemeDark2);
+
+var pie = d3.pie()
+  .value(function(d) {return d[1]; })
 
 // end variables for pie chart
 
@@ -39,7 +39,7 @@ const color = d3.scaleOrdinal()
 // add SVG to the page
 const nw_margin = { top: 50, right: 50, bottom: 50, left: 50 };
 const nw_width = window.innerWidth - nw_margin.left - nw_margin.right;
-const nw_height = 600 - nw_margin.top - nw_margin.bottom;
+const nw_height = 400 - nw_margin.top - nw_margin.bottom;
 const networthBar = d3
     .select("#networth-bar")
     .append('svg')
@@ -89,57 +89,35 @@ async function fetchAssets() {
         .then(response => response.json())
         .then(assets => {
             const data_ready = pie(Object.entries(assets));
-            updatePie(data_ready, pie_arc, pie_outerArc);
+            updatePie(data_ready);
         });
 }
 
-function updatePie(data_ready, pie_arc, pie_outerArc) {
+function updatePie(data_ready) {
     // remove all old properties
+    console.log(data_ready);
     asset_pie.selectAll("g > *").remove();
     // Build the pie chart: Basically, each part of the pie is a path that we build using the arc function.
     asset_pie
         .selectAll('allSlices')
         .data(data_ready)
         .join('path')
-        .attr('d', pie_arc)
+        .attr('d', arcGenerator)
         .attr('fill', d => color(d.data[0]))
         .attr("stroke", "white")
         .style("stroke-width", "2px")
         .style("opacity", 0.7)
 
-    // Add the polylines between chart and labels:
+        // Now add the annotation. Use the centroid method to get the best coordinates
     asset_pie
-        .selectAll('allPolylines')
-        .data(data_ready)
-        .join('polyline')
-        .attr("stroke", "black")
-        .style("fill", "none")
-        .attr("stroke-width", 1)
-        .attr('points', function (d) {
-            const posA = pie_arc.centroid(d) // line insertion in the slice
-            const posB = pie_outerArc.centroid(d) // line break: we use the other arc generator that has been built only for that
-            const posC = pie_outerArc.centroid(d); // Label position = almost the same as posB
-            const midangle = d.startAngle + (d.endAngle - d.startAngle) / 2 // we need the angle to see if the X position will be at the extreme right or extreme left
-            posC[0] = radius * 0.95 * (midangle < Math.PI ? 1 : -1); // multiply by 1 or -1 to put it on the right or on the left
-            return [posA, posB, posC]
-        })
-
-    // Add the polylines between chart and labels:
-    asset_pie
-        .selectAll('allLabels')
-        .data(data_ready)
-        .join('text')
-        .text(d => d.data[0] + " $" + d.data[1])
-        .attr('transform', function (d) {
-            const pos = pie_outerArc.centroid(d);
-            const midangle = d.startAngle + (d.endAngle - d.startAngle) / 2
-            pos[0] = radius * 0.99 * (midangle < Math.PI ? 1 : -1);
-            return `translate(${pos})`;
-        })
-        .style('text-anchor', function (d) {
-            const midangle = d.startAngle + (d.endAngle - d.startAngle) / 2
-            return (midangle < Math.PI ? 'start' : 'end')
-        })
+      .selectAll('allSlices')
+      .data(data_ready)
+      .enter()
+      .append('text')
+      .text(function(d){ return d.data[0]})
+      .attr("transform", function(d) { return "translate(" + arcGenerator.centroid(d) + ")";  })
+      .style("text-anchor", "middle")
+      .style("font-size", 17)
 }
 
 function responsivefy(svg) {
@@ -155,7 +133,7 @@ function responsivefy(svg) {
         .attr("perserveAspectRatio", "xMinYMid")
         .call(resize);
 
-    // to register multiple listeners for same event type, 
+    // to register multiple listeners for same event type,
     // you need to add namespace, i.e., 'click.foo'
     // necessary if you call invoke this function for multiple svgs
     // api docs: https://github.com/mbostock/d3/wiki/Selections#on
@@ -486,6 +464,7 @@ async function fetchData() {
 }
 
 function addData(startDate, endDate) {
+  console.log("adding data");
     fetch('/insertAssetTimeTest', {
         method: 'POST',
         body: JSON.stringify({ startDate: startDate, endDate: endDate }),
@@ -499,6 +478,7 @@ function addData(startDate, endDate) {
 var startdate = new Date();
 var enddate = new Date();
 enddate.setMonth(enddate.getMonth() - 60);
-//addData(startdate, enddate);
-
+console.log("adding data")
+addData(startdate, enddate);
+console.log("fetching data");
 fetchData();

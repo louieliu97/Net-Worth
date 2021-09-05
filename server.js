@@ -356,7 +356,7 @@ const incTotalAssetsTime = async (db, accountValue, assetType) => {
             }
             yesterdayValue += mongodb.Double(accountValue);
             yesterdayValue = mongodb.Double(yesterdayValue);
-            const item = {  
+            const item = {
                 date: date.toISOString(),
                 value: yesterdayValue,
                 asset_types: [assetType]
@@ -379,7 +379,7 @@ const incTotalAssetsTime = async (db, accountValue, assetType) => {
                 $addToSet: {
                     asset_types: assetType
                 }
-                
+
             }
             await total_assets_time_db
                 .updateOne(item, replace)
@@ -415,6 +415,7 @@ app.post('/insert', async function (req, res) {
 })
 
 app.post('/insertAssetTimeTest', async function (req, res) {
+    console.log("inserting into time test\n");
     var startDate = new Date(req.body.startDate);
     var endDate = new Date(req.body.endDate);
     var difftime = startDate.getTime() - endDate.getTime();
