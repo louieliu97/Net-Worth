@@ -29,6 +29,33 @@
 
 
     /* Side navigation links */
+    .sidenav label {
+      color: white;
+    }
+
+    .collapsible {
+      background-color: black;
+      color: white;
+      cursor: pointer;
+      padding: 18px;
+      width: 200px;
+      border: none;
+      text-align: center;
+      outline: none;
+      font-size: 15px;
+    }
+
+    .active, .collapsible:hover {
+      background-color: #555;
+    }
+
+    .collapsibleContent {
+      padding: 0 18px;
+      display: none;
+      overflow: hidden;
+      background-color: #f1f1f1;
+    }
+
     .sidenav a {
       color: white;
       padding: 16px;
@@ -50,9 +77,48 @@
 </head>
 <body>
   <div class="sidenav">
+    <label id="totalAssetsLabel">Net Worth: </label> <br />
+    <label id="totalAssetsLabel">Total Assets: </label><br />
+    <label id="totalAssetsLabel">Total Liabilities: </label><br />
+    <button type="button" id="cashCollapsible" class="collapsible">Cash</button>
+    <div class="collapsibleContent">
+      <p id="cashCollapsibleParagraph"></p>
+    </div>
+    <button type="button" id="cryptoCollapsible" class="collapsible">Crypto</button>
+    <div class="collapsibleContent">
+      <p id="cryptoCollapsibleParagraph"></p>
+    </div>
+    <button type="button" id="investmentsCollapsible" class="collapsible">Investments</button>
+    <div class="collapsibleContent">
+      <p id="investmentsCollapsibleParagraph"></p>
+    </div>
+    <button type="button" id="miscCollapsible" class="collapsible">Miscellaneous</button>
+    <div class="collapsibleContent">
+      <p id="miscCollapsibleParagraph"></p>
+    </div>
+    <button type="button" id="debtCollapsible" class="collapsible">Debt</button>
+    <div class="collapsibleContent">
+      <p id="debtCollapsibleParagraph"></p>
+    </div>
+
     <a href="#">Link</a>
     <a href="#">Link</a>
-    <a href="#">Link</a>
+    <script>
+      var coll = document.getElementsByClassName("collapsible");
+      var i;
+
+      for (i = 0; i < coll.length; i++) {
+        coll[i].addEventListener("click", function() {
+          this.classList.toggle("active");
+          var content = this.nextElementSibling;
+          if (content.style.display === "block") {
+            content.style.display = "none";
+          } else {
+            content.style.display = "block";
+          }
+        });
+      }
+    </script>
   </div>
   <div class="content">
     <label for="assetSelect">Choose a table</label>
