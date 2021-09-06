@@ -10,21 +10,49 @@ const radius = Math.min(pie_width, pie_height) / 2 - pie_margin;
 // append the svg object to the body of the page
 // append a 'group' element to 'svg'
 // moves the 'group' element to the top left margin
+const mouseOverHandler = function(d) {
+  d3.select(this).transition()
+  .duration(1000)
+  .attr("d", outerArcGenerator);
+}
+
+const mouseOutHandler = function(d) {
+  d3.select(this).transition()
+  .duration(1000)
+  .attr("d", arcGenerator);
+}
+
+const clickHandler = function(d) {
+  console.log("clicked: " + d["data"][0]);
+}
+
 var asset_pie = d3.select("#asset-pie")
     .append('svg')
     .attr("width", pie_width)
     .attr("height", pie_height)
-    .append('g')
-    .attr("transform", `translate(${pie_width / 2}, ${pie_height / 2})`);
 
-asset_pie.on("click", function() {
-  var coords = d3.mouse(this);
-  console.log(coords);
-})
+var renderarcs = asset_pie.append('g')
+    .attr("transform", `translate(${pie_width / 2}, ${pie_height / 2})`)
+    .selectAll('.arc')
+    .enter()
+    .append('g')
+    .attr('class', "arc");
+
+renderarcs.append("path")
+  .attr('d', arcGenerator)
+  .attr('fill', d => color(d.data[0]))
+  .on("mouseover", mouseOverHandler)
+  .on("mouseout", mouseOutHandler)
+  .on("click", clickHandler);
+
 
 var arcGenerator = d3.arc()
   .innerRadius(0)
   .outerRadius(radius);
+
+var outerArcGenerator = d3.arc()
+  .innerRadius(0)
+  .outerRadius(radius+10);
 
 const color = d3.scaleOrdinal()
     .domain(["cash", "crypto", "investments"])
@@ -95,29 +123,26 @@ async function fetchAssets() {
 
 function updatePie(data_ready) {
     // remove all old properties
-    console.log(data_ready);
     asset_pie.selectAll("g > *").remove();
     // Build the pie chart: Basically, each part of the pie is a path that we build using the arc function.
-    asset_pie
-        .selectAll('allSlices')
+    renderarcs = asset_pie.append('g')
+        .attr("transform", `translate(${pie_width / 2}, ${pie_height / 2})`)
+        .selectAll('.arc')
         .data(data_ready)
-        .join('path')
-        .attr('d', arcGenerator)
-        .attr('fill', d => color(d.data[0]))
-        .attr("stroke", "white")
-        .style("stroke-width", "2px")
-        .style("opacity", 0.7)
+        .enter()
+        .append('g')
+        .attr('class', "arc");
 
-        // Now add the annotation. Use the centroid method to get the best coordinates
-    asset_pie
-      .selectAll('allSlices')
-      .data(data_ready)
-      .enter()
-      .append('text')
+    renderarcs.append("path")
+      .attr('d', arcGenerator)
+      .attr('fill', d => color(d.data[0]))
+      .on("mouseover", mouseOverHandler)
+      .on("mouseout", mouseOutHandler)
+      .on("click", clickHandler);
+
+    renderarcs.append('text')
       .text(function(d){ return d.data[0]})
       .attr("transform", function(d) { return "translate(" + arcGenerator.centroid(d) + ")";  })
-      .style("text-anchor", "middle")
-      .style("font-size", 17)
 }
 
 function responsivefy(svg) {
@@ -478,7 +503,5 @@ function addData(startDate, endDate) {
 var startdate = new Date();
 var enddate = new Date();
 enddate.setMonth(enddate.getMonth() - 60);
-console.log("adding data")
-addData(startdate, enddate);
-console.log("fetching data");
+//addData(startdate, enddate);
 fetchData();
