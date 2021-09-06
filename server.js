@@ -62,6 +62,17 @@ const getTotalAssetsTimeArray = async (total_assets_time_db) => {
     const items = await total_assets_time_db.find().toArray();
     return items;
 }
+app.post('/assetTypeData', async function (req, res) {
+  try {
+    const asset_type = req.body.asset_type;
+
+    const asset_accounts_items_db = db.collection("asset_accounts_items");
+    var account_items = await asset_accounts_items_db.find({ asset_type: asset_type}).toArray();
+    console.log(account_items);
+    res.json(account_items);
+  }
+  catch (err) { console.error(err); }
+});
 
 app.post('/networth-date', async function (req, res) {
     try {

@@ -10,6 +10,9 @@ const radius = Math.min(pie_width, pie_height) / 2 - pie_margin;
 // append the svg object to the body of the page
 // append a 'group' element to 'svg'
 // moves the 'group' element to the top left margin
+var asset_data = {};
+var using_asset_data = true;
+
 const mouseOverHandler = function(d) {
   d3.select(this).transition()
   .duration(1000)
@@ -22,14 +25,14 @@ const mouseOutHandler = function(d) {
   .attr("d", arcGenerator);
 }
 
-const clickHandler = function(d) {
-  console.log("clicked: " + d["data"][0]);
+const clickHandler = async function(d) {
+  await updatePieData(d["data"][0]);
 }
 
 var asset_pie = d3.select("#asset-pie")
     .append('svg')
     .attr("width", pie_width)
-    .attr("height", pie_height)
+    .attr("height", pie_height);
 
 var renderarcs = asset_pie.append('g')
     .attr("transform", `translate(${pie_width / 2}, ${pie_height / 2})`)
@@ -54,7 +57,7 @@ var outerArcGenerator = d3.arc()
   .innerRadius(0)
   .outerRadius(radius+10);
 
-const color = d3.scaleOrdinal()
+var color = d3.scaleOrdinal()
     .domain(["cash", "crypto", "investments"])
     .range(d3.schemeDark2);
 
@@ -62,6 +65,91 @@ var pie = d3.pie()
   .value(function(d) {return d[1]; })
 
 // end variables for pie chart
+
+// functions related to pie charts
+// Get the poll data from the `/poll` endpoint
+async function fetchAssets() {
+    fetch('http://localhost:8080/assets')
+        .then(response => response.json())
+        .then(assets => {
+            asset_data = assets;
+            const data_ready = pie(Object.entries(asset_data));
+            updatePie(data_ready);
+        });
+}
+
+function updatePie(data_ready) {
+    // remove all old properties
+    asset_pie.selectAll("g > *").remove();
+    // Build the pie chart: Basically, each part of the pie is a path that we build using the arc function.
+
+    renderarcs = asset_pie.append('g')
+        .attr("transform", `translate(${pie_width / 2}, ${pie_height / 2})`)
+        .selectAll('.arc')
+        .data(data_ready)
+        .enter()
+        .append('g')
+        .attr('class', "arc");
+
+    renderarcs.append("path")
+      .on("mouseover", mouseOverHandler)
+      .on("mouseout", mouseOutHandler)
+      .on("click", clickHandler)
+      .attr('d', arcGenerator)
+      .attr('fill', d => color(d.data[0]));
+
+    renderarcs.append('text')
+      .text(function(d){ return d.data[0] })
+      .attr("transform", function(d) { return "translate(" + arcGenerator.centroid(d) + ")";  })
+
+    renderarcs.append('text')
+      .attr("dy", "1em")
+      .text(function(d){ return "$" + d.data[1]})
+      .attr("transform", function(d) { return "translate(" + arcGenerator.centroid(d) + ")";  })
+
+}
+
+function revertPie() {
+  const data_ready = pie(Object.entries(asset_data));
+  using_asset_data = true;
+  updatePie(data_ready);
+}
+
+const revertPieButton = document.getElementById('revertPieButton');
+revertPieButton.addEventListener('click', async function (e) {
+  revertPie();
+});
+
+async function updatePieData(asset_type) {
+  if(using_asset_data == true) {
+    using_asset_data = false;
+    fetch('http://localhost:8080/assetTypeData', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            asset_type : asset_type
+        })
+      }).then(res => res.json())
+      .then(assets => {
+        var data = {};
+        var new_colors = [];
+        for(let i = 0; i < assets.length; i++) {
+          var item = assets[i];
+          var data_item = {};
+          data[item["asset_name"]] = parseFloat(item["value"]);
+          new_colors.push(item["asset_name"]);
+        }
+        color = d3.scaleOrdinal()
+            .domain(new_colors)
+            .range(d3.schemeDark2);
+        updatePie(pie(Object.entries(data)));
+      }).catch(function (error) {
+          console.log(error);
+      })
+    }
+}
+// end functions related to pie charts
+
 
 // set variables for net-worth chart
 // add SVG to the page
@@ -111,40 +199,6 @@ async function fetchNetWorthDate(startDate, endDate) {
 }
 // add SVG to the page
 
-// Get the poll data from the `/poll` endpoint
-async function fetchAssets() {
-    fetch('http://localhost:8080/assets')
-        .then(response => response.json())
-        .then(assets => {
-            const data_ready = pie(Object.entries(assets));
-            updatePie(data_ready);
-        });
-}
-
-function updatePie(data_ready) {
-    // remove all old properties
-    asset_pie.selectAll("g > *").remove();
-    // Build the pie chart: Basically, each part of the pie is a path that we build using the arc function.
-    renderarcs = asset_pie.append('g')
-        .attr("transform", `translate(${pie_width / 2}, ${pie_height / 2})`)
-        .selectAll('.arc')
-        .data(data_ready)
-        .enter()
-        .append('g')
-        .attr('class', "arc");
-
-    renderarcs.append("path")
-      .attr('d', arcGenerator)
-      .attr('fill', d => color(d.data[0]))
-      .on("mouseover", mouseOverHandler)
-      .on("mouseout", mouseOutHandler)
-      .on("click", clickHandler);
-
-    renderarcs.append('text')
-      .text(function(d){ return d.data[0]})
-      .attr("transform", function(d) { return "translate(" + arcGenerator.centroid(d) + ")";  })
-}
-
 function responsivefy(svg) {
     // get container + svg aspect ratio
     var container = d3.select(svg.node().parentNode),
@@ -164,7 +218,7 @@ function responsivefy(svg) {
     // api docs: https://github.com/mbostock/d3/wiki/Selections#on
     d3.select(window).on("resize." + container.attr("id"), resize);
 
-    // get width of container and resize svg to fit it
+  // get width of container and resize svg to fit it
     function resize() {
         var targetWidth = parseInt(container.style("width"));
         svg.attr("width", targetWidth);
@@ -408,10 +462,9 @@ insertButton.addEventListener('click', function (e) {
     }).then(res => {
         fetchAssets();
         fetchNetWorth();
-    })
-        .catch(function (error) {
-            console.log(error);
-        })
+    }).catch(function (error) {
+          console.log(error);
+      })
 
 });
 
