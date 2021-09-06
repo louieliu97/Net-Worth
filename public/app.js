@@ -109,9 +109,18 @@ function updatePie(data_ready) {
 
 }
 
+function setRevertPieVisibility() {
+  let visible = "visible";
+  if(using_asset_data == true) {
+    visible = "hidden";
+  }
+  document.getElementById("revertPieButton").style.visibility = visible;
+}
+
 function revertPie() {
   const data_ready = pie(Object.entries(asset_data));
   using_asset_data = true;
+  setRevertPieVisibility();
   updatePie(data_ready);
 }
 
@@ -143,6 +152,7 @@ async function updatePieData(asset_type) {
             .domain(new_colors)
             .range(d3.schemeDark2);
         updatePie(pie(Object.entries(data)));
+        setRevertPieVisibility();
       }).catch(function (error) {
           console.log(error);
       })
