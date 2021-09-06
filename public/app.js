@@ -440,44 +440,6 @@ const movingAverage = (data, numberOfPricePoints) => {
     });
 };
 
-// //////////////////////////////////////////
-const insertButton = document.getElementById('insertButton');
-insertButton.addEventListener('click', function (e) {
-    var assetSelect = document.getElementById('assetSelect');
-    var assetName = document.getElementById('assetName');
-    var accountName = document.getElementById('accountName');
-    var accountValue = document.getElementById('accountValue');
-
-    var assetTypeVal = String(assetSelect.value);
-    var assetNameVal = String(assetName.value);
-    var accountNameVal = String(accountName.value);
-    var accountValueVal = parseFloat(accountValue.value);
-
-    // resets values to empty
-    accountName.value = "";
-    accountValue.value = "";
-    assetName.value = "";
-
-    const response = {
-        assetType: assetTypeVal,
-        assetName: assetNameVal,
-        accountName: accountNameVal,
-        accountValue: accountValueVal
-    };
-
-    fetch('/insert', {
-        method: 'POST',
-        body: JSON.stringify(response),
-        headers: { 'Content-Type': 'application/json' }
-    }).then(res => {
-        fetchAssets();
-        fetchNetWorth();
-    }).catch(function (error) {
-          console.log(error);
-      })
-
-});
-
 function wait(ms) {
     var start = new Date().getTime();
     var end = start;
@@ -561,6 +523,14 @@ function addData(startDate, endDate) {
     ).catch(function (error) {
             console.log(error);
         })
+}
+
+var modal = document.getElementById("insertDataModal");
+// When the user clicks anywhere outside of the modal, close it
+window.onclick = function(event) {
+  if (event.target == modal) {
+    modal.style.display = "none";
+  }
 }
 
 var startdate = new Date();

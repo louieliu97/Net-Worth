@@ -17,36 +17,96 @@ body {
     overflow: scroll;
     background: linear-gradient(135deg, #ffffff 0%,#e8f1f5 100%);
 }
-
-.container {
-    position: absolute;
-    padding: 20px;
-    top: 50%;
-    left: 50%;
-    background-color: white;
-    border-radius: 4px;
-    transform: translate(-50%, -50%);
-    box-shadow: 0px 50px 100px 0px rgba(0,0,102,0.1);
-    text-align: center;
+/* Style the side navigation */
+.sidenav {
+  height: 100%;
+  width: 200px;
+  position: fixed;
+  z-index: 1;
+  top: 0;
+  left: 0;
+  background-color: #111;
+  overflow-x: hidden;
 }
 
-    .container h1 {
-        color: #333;
-    }
-
-.bar {
-    fill: #6875ff;
-    border-radius: 2px;
+.insertDataButton {
+  background-color: black;
+  color: white;
+  cursor: pointer;
+  padding: 18px;
+  width: 200px;
+  border: none;
+  text-align: left;
+  outline: none;
+  font-size: 15px;
+}
+/* Side navigation links */
+.sidenav label {
+  color: white;
 }
 
-    .bar:hover {
-        fill: #1edede;
-    }
+.collapsible {
+  background-color: black;
+  color: white;
+  cursor: pointer;
+  padding: 18px;
+  width: 200px;
+  border: none;
+  text-align: left;
+  outline: none;
+  font-size: 15px;
+}
 
-.tooltip {
-    opacity: 0;
-    background-color: rgb(170, 204, 247);
-    padding: 5px;
-    border-radius: 4px;
-    transition: opacity 0.2s ease;
+.active, .collapsible:hover {
+  background-color: #555;
+}
+
+.collapsibleContent {
+  padding: 0 18px;
+  display: none;
+  overflow: hidden;
+  background-color: #f1f1f1;
+}
+
+.sidenav a {
+  color: white;
+  padding: 16px;
+  text-decoration: none;
+  display: block;
+}
+
+/* Change color on hover */
+.sidenav a:hover {
+  background-color: #ddd;
+  color: black;
+}
+/* Style the content */
+.content {
+  margin-left: 200px;
+  padding-left: 20px;
+}
+
+.modal {
+  display: none; /* Hidden by default */
+  position: fixed; /* Stay in place */
+  z-index: 1; /* Sit on top */
+  left: 200px;
+  top: 0;
+  width: 500; /* Full width */
+  height: 500; /* Full height */
+  overflow: auto; /* Enable scroll if needed */
+}
+/* Modal Content/Box */
+.modal-content {
+  background-color: #fefefe;
+  margin: 15% auto; /* 15% from the top and centered */
+  padding: 20px;
+  border: 1px solid #888;
+  width: 80%; /* Could be more or less, depending on screen size */
+}
+
+.data-insert-form {
+  bottom: 0;
+  right: 15px;
+  border: 3px solid #f1f1f1;
 }

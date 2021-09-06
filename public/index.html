@@ -6,77 +6,11 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <link rel="stylesheet" href="style.css">
     <title>NetWorth Tracker</title>
-    <style>
-    * {
-      box-sizing: border-box;
-    }
-    body {
-      margin: 0
-      font-family: Arial, Helvetica, sans-serif;
-    }
-
-    /* Style the side navigation */
-    .sidenav {
-      height: 100%;
-      width: 200px;
-      position: fixed;
-      z-index: 1;
-      top: 0;
-      left: 0;
-      background-color: #111;
-      overflow-x: hidden;
-    }
-
-
-    /* Side navigation links */
-    .sidenav label {
-      color: white;
-    }
-
-    .collapsible {
-      background-color: black;
-      color: white;
-      cursor: pointer;
-      padding: 18px;
-      width: 200px;
-      border: none;
-      text-align: center;
-      outline: none;
-      font-size: 15px;
-    }
-
-    .active, .collapsible:hover {
-      background-color: #555;
-    }
-
-    .collapsibleContent {
-      padding: 0 18px;
-      display: none;
-      overflow: hidden;
-      background-color: #f1f1f1;
-    }
-
-    .sidenav a {
-      color: white;
-      padding: 16px;
-      text-decoration: none;
-      display: block;
-    }
-
-    /* Change color on hover */
-    .sidenav a:hover {
-      background-color: #ddd;
-      color: black;
-    }
-    /* Style the content */
-    .content {
-      margin-left: 200px;
-      padding-left: 20px;
-    }
-    </style>
 </head>
 <body>
   <div class="sidenav">
+    <button class="insertDataButton" onclick="insertData()">Insert Data</button> <br />
+
     <label id="totalAssetsLabel">Net Worth: </label> <br />
     <label id="totalAssetsLabel">Total Assets: </label><br />
     <label id="totalAssetsLabel">Total Liabilities: </label><br />
@@ -118,25 +52,45 @@
           }
         });
       }
+
+      function insertData() {
+        document.getElementById("insertDataModal").style.display = "block";
+      }
+
+      function closeForm() {
+        document.getElementById("insertDataModal").style.display = "none";
+      }
     </script>
   </div>
+
+<div id="insertDataModal" class="modal">
+  <div class="modal-content">
+      <form action="http://localhost:8080/insert" method="post">
+        <h1>Input Data</h1>
+          <label for="assetSelect"><b>Asset Type</b></label><br />
+          <select name="assetSelect" id="assetSelect">
+              <option value="investments">investments</option>
+              <option value="crypto">crypto</option>
+              <option value="cash">cash</option>
+              <option value="misc">misc</option>
+              <option value="debt">debt</option>
+          </select><br />
+
+          <label for="accountName"><b>Account Name</b></label>
+          <input type="text" placeholder="Enter Account Name" name="accountName" required><br />
+
+          <label for="assetName"><b>Asset Name</b></label>
+          <input type="text" placeholder="Enter Asset Name" name="assetName" required><br />
+
+          <label for="assetValue"><b>Asset Value</b></label><br />
+          <input type="text" placeholder="Enter Asset Value" name="assetValue" required><br />
+          <button type="submit" class="btn">Insert</button>
+          <button type="button" class="btn cancel" onclick="closeForm()">Close</button>
+        </form>
+    </div>
+  </div>
+
   <div class="content">
-    <label for="assetSelect">Choose a table</label>
-    <select name="assetSelect" id="assetSelect">
-        <option value="investments">investments</option>
-        <option value="crypto">crypto</option>
-        <option value="cash">cash</option>
-        <option value="debt">debt</option>
-    </select><br />
-    <label for="assetName">Enter Asset Name:</label>
-    <textarea name="assetName" id="assetName" rows="1" cols="25"></textarea><br />
-    <label for="accountName">Enter Account Name:</label>
-    <textarea name="accountName" id="accountName" rows="1" cols="25"></textarea><br />
-    <label for="accountValue">Enter Account Value:</label>
-    <textarea name="accountValue" id="accountValue" rows="1" cols="25"></textarea><br />
-    <button id="insertButton">Insert Into Database</button><br/>
-
-
     <script src="https://d3js.org/d3.v5.min.js"></script>
     <div id="asset-pie">
       <button id="revertPieButton" style="visibility:hidden">Revert Pie</button>
