@@ -533,8 +533,34 @@ window.onclick = function(event) {
   }
 }
 
+async function updateAssetParagraphs() {
+
+}
+
+async function updateDebtParagraph() {
+
+}
+
+async function updateSidebarLabels() {
+    const netWorthLabel = document.getElementById('netWorthLabel');
+    const totalAssetsLabel = document.getElementById('totalAssetsLabel');
+    const totalLiabilitiesLabel = document.getElementById('totalLiabilitiesLabel');
+
+    fetch('http://localhost:8080/sidebarLabels')
+        .then(response => response.json())
+        .then(sidebarLabels => {
+            netWorthLabel.innerHTML = "Net Worth: $" + sidebarLabels.networth;
+            totalAssetsLabel.innerHTML = "Total Assets: $" + sidebarLabels.assets;
+            totalLiabilitiesLabel.innerHTML = "Total Liabilities: $" + sidebarLabels.debt;
+        })
+}
+// Collapsible Stuff
+const cashCollapsibleParagraph = document.getElementById('cashCollapsibleParagraph');
+
+// End Collapsible Stuff
 var startdate = new Date();
 var enddate = new Date();
 enddate.setMonth(enddate.getMonth() - 60);
 //addData(startdate, enddate);
+updateSidebarLabels();
 fetchData();

@@ -62,6 +62,42 @@ const getTotalAssetsTimeArray = async (total_assets_time_db) => {
     const items = await total_assets_time_db.find().toArray();
     return items;
 }
+
+const getTotalAssets = async () => {
+    const assets_db = db.collection("assets");
+    var assets = await assets_db.find().toArray();
+    let total = 0;
+    for (let i = 0; i < assets.length; i++) {
+        total += parseFloat(assets[i].value);
+    }
+    return total;
+}
+
+const getTotalDebt = async() => {
+    const debts_db = db.collection("debts");
+    var debts = await debts_db.find().toArray();
+    let total = 0;
+    for (let i = 0; i < debts.length; i++) {
+        total += debts[i].value;
+    }
+    return total;
+}
+app.get('/sidebarLabels', async function (req, res) {
+    try {
+        var total_assets = await getTotalAssets();
+        var total_liabilities = await getTotalDebt();
+        var net_worth = total_assets - total_liabilities;
+
+        const json = {
+            networth: net_worth,
+            debt: total_liabilities,
+            assets: total_assets
+        };
+        res.json(json);
+    }
+    catch (err) { console.error(err); }
+});
+
 app.post('/assetTypeData', async function (req, res) {
   try {
     const asset_type = req.body.asset_type;
