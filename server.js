@@ -175,6 +175,7 @@ const incAsset = async (db, assetType, accountValue) => {
         const asset_db = db.collection("assets");
         const query = { asset_type: assetType };
         var item = await asset_db.findOne(query);
+        console.log("assetType: " + assetType);
 
         if (item == null) {
             const asset_obj = {

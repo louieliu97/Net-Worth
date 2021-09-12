@@ -509,6 +509,7 @@ lifetimeButton.addEventListener('click', async function (e) {
 });
 
 async function fetchData() {
+    await updateSidebarLabels();
     await fetchAssets();
     await fetchNetWorth();
 }
@@ -532,6 +533,30 @@ window.onclick = function(event) {
     modal.style.display = "none";
   }
 }
+// Collapsible Stuff
+const modalInsertButton = document.getElementById('modalInsertButton');
+modalInsertButton.addEventListener('click', async function (e) {
+    const assetSelect = document.getElementById('assetSelect').value;
+    const accountName = document.getElementById('accountName').value;
+    const assetName = document.getElementById('assetName').value;
+    const assetValue = parseFloat(document.getElementById('assetValue').value);
+    fetch('/insert', {
+        method: 'POST',
+        body: JSON.stringify(
+            {
+                assetType: assetSelect,
+                assetName: assetName,
+                accountName: accountName,
+                accountValue: assetValue
+            }),
+        headers: { 'Content-Type': 'application/json' }
+    }).then(res => { console.log(res); })
+    .catch(function (error) {
+        console.log(error);
+    })
+
+    await fetchData();
+});
 
 async function updateAssetParagraphs() {
 
@@ -553,14 +578,14 @@ async function updateSidebarLabels() {
             totalAssetsLabel.innerHTML = "Total Assets: $" + sidebarLabels.assets;
             totalLiabilitiesLabel.innerHTML = "Total Liabilities: $" + sidebarLabels.debt;
         })
+        .catch(function (error) {
+            console.log(error);
+        })
 }
-// Collapsible Stuff
-const cashCollapsibleParagraph = document.getElementById('cashCollapsibleParagraph');
 
 // End Collapsible Stuff
 var startdate = new Date();
 var enddate = new Date();
 enddate.setMonth(enddate.getMonth() - 60);
 //addData(startdate, enddate);
-updateSidebarLabels();
 fetchData();

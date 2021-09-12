@@ -65,28 +65,26 @@
 
 <div id="insertDataModal" class="modal">
   <div class="modal-content">
-      <form action="http://localhost:8080/insert" method="post">
-        <h1>Input Data</h1>
-          <label for="assetSelect"><b>Asset Type</b></label><br />
-          <select name="assetSelect" id="assetSelect">
-              <option value="investments">investments</option>
-              <option value="crypto">crypto</option>
-              <option value="cash">cash</option>
-              <option value="misc">misc</option>
-              <option value="debt">debt</option>
-          </select><br />
+    <h1>Input Data</h1>
+        <label for="assetSelect"><b>Asset Type</b></label><br />
+        <select name="assetSelect" id="assetSelect">
+            <option value="investments">investments</option>
+            <option value="crypto">crypto</option>
+            <option value="cash">cash</option>
+            <option value="misc">misc</option>
+            <option value="debt">debt</option>
+        </select><br />
 
-          <label for="accountName"><b>Account Name</b></label>
-          <input type="text" placeholder="Enter Account Name" name="accountName" required><br />
+        <label for="accountName"><b>Account Name</b></label>
+        <input type="text" placeholder="Enter Account Name" id="accountName" required><br />
 
-          <label for="assetName"><b>Asset Name</b></label>
-          <input type="text" placeholder="Enter Asset Name" name="assetName" required><br />
+        <label for="assetName"><b>Asset Name</b></label>
+        <input type="text" placeholder="Enter Asset Name" id="assetName" required><br />
 
-          <label for="assetValue"><b>Asset Value</b></label><br />
-          <input type="text" placeholder="Enter Asset Value" name="assetValue" required><br />
-          <button type="submit" class="btn">Insert</button>
-          <button type="button" class="btn cancel" onclick="closeForm()">Close</button>
-        </form>
+        <label for="assetValue"><b>Asset Value</b></label><br />
+        <input type="text" placeholder="Enter Asset Value" id="assetValue" required><br />
+        <button type="submit" class="btn" id="modalInsertButton">Insert</button>
+        <button type="button" class="btn cancel" onclick="closeForm()">Close</button>
     </div>
   </div>
 
