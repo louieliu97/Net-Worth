@@ -189,7 +189,6 @@ async function fetchNetWorth() {
 }
 
 async function fetchNetWorthDate(startDate, endDate) {
-    console.log("start: " + startDate + " end: " + endDate);
     fetch('http://localhost:8080/networth-date', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -258,7 +257,6 @@ const updateDateRange = function (svg, firstDate, data) {
 
 
 const updateChart = async data => {
-    console.log("updating chart: " + data.length);
     // remove all old properties
     networthBar.selectAll("g > *").remove();
 
@@ -518,7 +516,6 @@ async function fetchData() {
 }
 
 function addData(startDate, endDate) {
-  console.log("adding data");
     fetch('/insertAssetTimeTest', {
         method: 'POST',
         body: JSON.stringify({ startDate: startDate, endDate: endDate }),

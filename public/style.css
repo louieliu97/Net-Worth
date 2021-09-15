@@ -20,7 +20,7 @@ body {
 /* Style the side navigation */
 .sidenav {
   height: 100%;
-  width: 200px;
+  width: 300px;
   position: fixed;
   z-index: 1;
   top: 0;
@@ -34,7 +34,7 @@ body {
   color: white;
   cursor: pointer;
   padding: 18px;
-  width: 200px;
+  width: 300px;
   border: none;
   text-align: left;
   outline: none;
@@ -50,7 +50,7 @@ body {
   color: white;
   cursor: pointer;
   padding: 18px;
-  width: 200px;
+  width: 300px;
   border: none;
   text-align: left;
   outline: none;
@@ -82,15 +82,16 @@ body {
 }
 /* Style the content */
 .content {
-  margin-left: 200px;
-  padding-left: 20px;
+    margin-left: 300px;
+    padding-left: 20px;
+    width: 50%;
 }
 
 .modal {
   display: none; /* Hidden by default */
   position: fixed; /* Stay in place */
   z-index: 1; /* Sit on top */
-  left: 200px;
+  left: 300px;
   top: 0;
   width: 500; /* Full width */
   height: 500; /* Full height */

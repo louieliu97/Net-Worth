@@ -90,7 +90,6 @@ app.post('/sidebarParagraph', async function (req, res) {
         const query = { asset_type: asset_type };
 
         var asset_accounts = await asset_accounts_db.find(query).toArray();
-        console.log('asset accounts: ' + asset_accounts);
         res.json(asset_accounts);
     }
     catch (err) { console.error(err); }
@@ -118,7 +117,6 @@ app.post('/assetTypeData', async function (req, res) {
 
     const asset_accounts_items_db = db.collection("asset_accounts_items");
     var account_items = await asset_accounts_items_db.find({ asset_type: asset_type}).toArray();
-    console.log(account_items);
     res.json(account_items);
   }
   catch (err) { console.error(err); }
