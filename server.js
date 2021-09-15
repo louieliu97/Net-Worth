@@ -82,6 +82,20 @@ const getTotalDebt = async() => {
     }
     return total;
 }
+
+app.post('/sidebarParagraph', async function (req, res) {
+    try {
+        const asset_type = req.body.assetType;
+        const asset_accounts_db = db.collection('asset_accounts');
+        const query = { asset_type: asset_type };
+
+        var asset_accounts = await asset_accounts_db.find(query).toArray();
+        console.log('asset accounts: ' + asset_accounts);
+        res.json(asset_accounts);
+    }
+    catch (err) { console.error(err); }
+});
+
 app.get('/sidebarLabels', async function (req, res) {
     try {
         var total_assets = await getTotalAssets();

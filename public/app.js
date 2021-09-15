@@ -1,7 +1,7 @@
 ﻿// set variables for pie_chart
 const pie_margin = 100;
-const pie_width = 600 - pie_margin;
-const pie_height = 600 - pie_margin;
+const pie_width = 800 - pie_margin;
+const pie_height = 800 - pie_margin;
 
 const radius = Math.min(pie_width, pie_height) / 2 - pie_margin;
 
@@ -165,7 +165,7 @@ async function updatePieData(asset_type) {
 // add SVG to the page
 const nw_margin = { top: 50, right: 50, bottom: 50, left: 50 };
 const nw_width = window.innerWidth - nw_margin.left - nw_margin.right;
-const nw_height = 400 - nw_margin.top - nw_margin.bottom;
+const nw_height = 600 - nw_margin.top - nw_margin.bottom;
 const networthBar = d3
     .select("#networth-bar")
     .append('svg')
@@ -509,9 +509,12 @@ lifetimeButton.addEventListener('click', async function (e) {
 });
 
 async function fetchData() {
-    await updateSidebarLabels();
-    await fetchAssets();
-    await fetchNetWorth();
+    await Promise.all([
+        updateSidebarLabels(),
+        fetchAssets(),
+        fetchNetWorth(),
+        updateAllSidebarDivs()
+    ]);
 }
 
 function addData(startDate, endDate) {
@@ -581,6 +584,65 @@ async function updateSidebarLabels() {
         .catch(function (error) {
             console.log(error);
         })
+}
+
+async function getSidebarDivArr(asset_type) {
+    return fetch('/sidebarParagraph', {
+        method: 'POST',
+        body: JSON.stringify(
+            {
+                assetType: asset_type
+            }),
+        headers: { 'Content-Type': 'application/json' }
+        })
+        .then(res => res.json())
+        .then(sidebarParagraph => { return sidebarParagraph; })
+        .catch(function (error) {
+            console.log(error);
+        })
+}
+
+async function updateSidebarDiv(div, sidebar_div_arr) {
+    console.log("sidebar div: " + JSON.stringify(sidebar_div_arr));
+    var hr = document.createElement('hr');
+    div.appendChild(hr);
+    for (let i = 0; i < sidebar_div_arr.length; i++) {
+        var s = sidebar_div_arr[i];
+        var accountNameTag = document.createElement("p");
+        var accountNameText = document.createTextNode(s["account_name"] + " - $" + s["value"]);
+        accountNameTag.appendChild(accountNameText);
+        div.appendChild(accountNameTag);
+        var hr = document.createElement('hr');
+        div.appendChild(hr);
+    }
+}
+
+
+async function updateAllSidebarDivs() {
+    var cryptoDiv = document.getElementById("cryptoCollapsibleDiv");
+    var investDiv = document.getElementById("investmentsCollapsibleDiv");
+    var cashDiv = document.getElementById("cashCollapsibleDiv");
+    var miscDiv = document.getElementById("miscCollapsibleDiv");
+
+    // Clear the divs for now. ideally we only update what got added/changed
+    cryptoDiv.innerHTML = '';
+    investDiv.innerHTML = '';
+    cashDiv.innerHTML = '';
+    miscDiv.innerHTML = '';
+
+    let [cryptoDivArr, investDivArr, cashDivArr, miscDivArr] = await Promise.all([
+        getSidebarDivArr("crypto"),
+        getSidebarDivArr("investments"),
+        getSidebarDivArr("cash"),
+        getSidebarDivArr("misc")
+    ]);
+
+    await Promise.all([
+        updateSidebarDiv(cryptoDiv, cryptoDivArr),
+        updateSidebarDiv(investDiv, investDivArr),
+        updateSidebarDiv(cashDiv, cashDivArr),
+        updateSidebarDiv(miscDiv, miscDivArr)
+    ]);
 }
 
 // End Collapsible Stuff
