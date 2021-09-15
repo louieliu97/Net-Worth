@@ -82,9 +82,19 @@ body {
 }
 /* Style the content */
 .content {
+    display: block;
     margin-left: 300px;
-    padding-left: 20px;
-    width: 50%;
+    margin-right: auto;
+    padding-left: 10px;
+}
+
+.content h1 {
+    text-align: center;
+}
+
+.buttonDiv {
+    margin-right: auto;
+    padding-left: 30px;
 }
 
 .modal {

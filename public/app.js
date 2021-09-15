@@ -1,7 +1,8 @@
 ﻿// set variables for pie_chart
-const pie_margin = 100;
-const pie_width = 800 - pie_margin;
-const pie_height = 800 - pie_margin;
+const pie_margin = 50;
+console.log(window.innerHeight)
+const pie_height = (window.innerHeight*0.6) - pie_margin;
+const pie_width = (window.innerWidth*0.8)-pie_margin;
 
 const radius = Math.min(pie_width, pie_height) / 2 - pie_margin;
 
@@ -165,7 +166,7 @@ async function updatePieData(asset_type) {
 // add SVG to the page
 const nw_margin = { top: 50, right: 50, bottom: 50, left: 50 };
 const nw_width = window.innerWidth - nw_margin.left - nw_margin.right;
-const nw_height = 600 - nw_margin.top - nw_margin.bottom;
+const nw_height = (window.innerHeight*0.6) - nw_margin.top - nw_margin.bottom;
 const networthBar = d3
     .select("#networth-bar")
     .append('svg')
